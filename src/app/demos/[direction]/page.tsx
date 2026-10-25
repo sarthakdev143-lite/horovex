@@ -10,15 +10,15 @@ export default function DirectionDemoPage({
   params: Promise<{ direction: string }>;
 }) {
   const resolved = use(params);
-  const raw = (resolved?.direction || 'landscape').toLowerCase();
+  const raw = (resolved?.direction || 'sanctuary').toLowerCase();
   const initialDirection: ArtDirectionId =
-    raw in DIRECTION_THEMES ? (raw as ArtDirectionId) : 'landscape';
+    raw in DIRECTION_THEMES ? (raw as ArtDirectionId) : 'sanctuary';
 
   return (
     <Suspense
       fallback={
-        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F1F0EC] text-[#141413] text-base">
-          Loading HOROVEX decision engine…
+        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F1F0EC] text-[#161615] text-base">
+          Loading HOROVEX decision sanctuary…
         </div>
       }
     >

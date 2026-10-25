@@ -40,7 +40,7 @@ const ZERO_LEVERS: SliderDeltas = {
 };
 
 export default function ArtDirectionDemo({
-  initialDirection = 'landscape',
+  initialDirection = 'sanctuary',
 }: ArtDirectionDemoProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -56,9 +56,8 @@ export default function ArtDirectionDemo({
     }
   }, [queryDir]);
 
-  const theme = DIRECTION_THEMES[direction];
+  const theme = DIRECTION_THEMES[direction] || DIRECTION_THEMES.sanctuary;
 
-  // Sync document body background and text color with active direction so browser inspector sees exact ground
   useEffect(() => {
     document.documentElement.style.backgroundColor = theme.ground;
     document.body.style.backgroundColor = theme.ground;
@@ -83,7 +82,6 @@ export default function ArtDirectionDemo({
   const setSensitivityLevers = useMultiverseStore((state) => state.setSensitivityLevers);
   const collapseWavefunction = useMultiverseStore((state) => state.collapseWavefunction);
 
-  // Immutable baseline conditional probabilities per node id so slider perturbation never drifts or compounds
   const baselineProbsRef = useRef<Record<string, number>>({});
 
   const [dilemmaInput, setDilemmaInput] = useState('');
@@ -93,10 +91,35 @@ export default function ArtDirectionDemo({
   const [activeScenarioSlug, setActiveScenarioSlug] = useState<string>('saas-pivot');
   const [copiedBrief, setCopiedBrief] = useState(false);
 
-  // Initialize default flagship scenario on first mount
+  // Scroll-driven 3D camera state & Fly-to-monolith focus mode
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [cameraMode, setCameraMode] = useState<'scroll' | 'focus' | 'overview'>('scroll');
+  const [pureGardenView, setPureGardenView] = useState(false);
+  const lastScrollYRef = useRef(0);
+
   useEffect(() => {
     loadScenario(flagshipFounderSaaSPivot, 'saas-pivot');
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const sy = window.scrollY || document.documentElement.scrollTop || 0;
+      const maxScroll = Math.max(
+        1,
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+      const progress = Math.max(0, Math.min(1, sy / maxScroll));
+      setScrollProgress(progress);
+
+      if (Math.abs(sy - lastScrollYRef.current) > 28) {
+        lastScrollYRef.current = sy;
+        setCameraMode('scroll');
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   const recordBaselineProbs = (nodeList: ProbabilityNode[], resetAll = false) => {
@@ -128,6 +151,7 @@ export default function ArtDirectionDemo({
     setUserContextTwin(scenario.recommendedTwin);
     setGoldenPath(scenario.expectedGoldenPathIds);
     setActiveScenarioSlug(slug);
+    setCameraMode('scroll');
   };
 
   const handleSwitchDirection = (nextDir: ArtDirectionId) => {
@@ -139,7 +163,11 @@ export default function ArtDirectionDemo({
     }
   };
 
-  // Live Dilemma Simulation
+  const handleFocusNode = (id: string) => {
+    selectNode(id);
+    setCameraMode('focus');
+  };
+
   const handleSimulateDilemma = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanPrompt = dilemmaInput.trim();
@@ -224,6 +252,7 @@ export default function ArtDirectionDemo({
       );
       setGoldenPath(solved);
       setActiveScenarioSlug('custom');
+      setCameraMode('focus');
     } catch {
       const fallbackNodes = generateDeterministicWave(cleanPrompt, 1, 1, rootId, 1.0);
       const map: Record<string, ProbabilityNode> = { [rootId]: rootNode };
@@ -247,12 +276,12 @@ export default function ArtDirectionDemo({
         userContextTwin
       );
       setGoldenPath(solved);
+      setCameraMode('focus');
     } finally {
       setIsSimulating(false);
     }
   };
 
-  // Live "+5 more futures" Horizontal Expansion
   const handleExpandFiveMore = async () => {
     if (isSimulating) return;
     const currentStore = useMultiverseStore.getState();
@@ -294,7 +323,10 @@ export default function ArtDirectionDemo({
         unexploredMass: newRemainingMass,
         exploredMass: Number((1 - newRemainingMass).toFixed(4)),
       });
-      selectNode(newNodes[0]?.id || selectedNodeId);
+      if (newNodes[0]) {
+        selectNode(newNodes[0].id);
+        setCameraMode('focus');
+      }
 
       const allNodes = Object.values(useMultiverseStore.getState().nodes);
       const { goldenPathNodeIds: solved } = solveGoldenPath(
@@ -318,13 +350,15 @@ export default function ArtDirectionDemo({
         unexploredMass: newRemainingMass,
         exploredMass: Number((1 - newRemainingMass).toFixed(4)),
       });
-      selectNode(fallback[0]?.id || selectedNodeId);
+      if (fallback[0]) {
+        selectNode(fallback[0].id);
+        setCameraMode('focus');
+      }
     } finally {
       setIsSimulating(false);
     }
   };
 
-  // Live "Show what happens next" Vertical Recursion
   const handleStepIntoFuture = async (customMove?: string) => {
     if (isSimulating) return;
     const target = selectedNodeId ? nodes[selectedNodeId] : null;
@@ -363,7 +397,10 @@ export default function ArtDirectionDemo({
       recordBaselineProbs(childNodes, false);
       addNodes(childNodes);
       useMultiverseStore.setState({ activeDepth: nextDepth });
-      selectNode(childNodes[0]?.id || target.id);
+      if (childNodes[0]) {
+        selectNode(childNodes[0].id);
+        setCameraMode('focus');
+      }
 
       const allNodes = Object.values(useMultiverseStore.getState().nodes);
       const activeRoot = rootNodeId || allNodes.find((n) => !n.parentId)?.id;
@@ -387,7 +424,10 @@ export default function ArtDirectionDemo({
       recordBaselineProbs(fallback, false);
       addNodes(fallback);
       useMultiverseStore.setState({ activeDepth: nextDepth });
-      selectNode(fallback[0]?.id || target.id);
+      if (fallback[0]) {
+        selectNode(fallback[0].id);
+        setCameraMode('focus');
+      }
     } finally {
       setIsSimulating(false);
       setShowInterventionBox(false);
@@ -395,7 +435,6 @@ export default function ArtDirectionDemo({
     }
   };
 
-  // Apply lever vector against immutable baseline probabilities per parent sibling group
   const applyLeverVector = (nextLevers: SliderDeltas) => {
     setSensitivityLevers(nextLevers);
     const currentNodes = useMultiverseStore.getState().nodes;
@@ -406,7 +445,6 @@ export default function ArtDirectionDemo({
       nextLevers.marketTailwind === 0 &&
       nextLevers.skillPreparation === 0;
 
-    // Group non-root nodes by parentId so softmax mass is conserved per parent branch
     const byParent = new Map<string, ProbabilityNode[]>();
     nodeList.forEach((n) => {
       if (!n.parentId) return;
@@ -432,7 +470,6 @@ export default function ArtDirectionDemo({
       }
     });
 
-    // Top-down cumulative probability propagation by depth
     const sortedByDepth = [...nodeList].sort((a, b) => a.depth - b.depth);
     const nextNodeMap: Record<string, ProbabilityNode> = {};
     sortedByDepth.forEach((n) => {
@@ -523,190 +560,44 @@ export default function ArtDirectionDemo({
     setTimeout(() => setCopiedBrief(false), 2500);
   };
 
-  // Shared 3D Stage Controls & Branch Selector Fragment
-  const renderStageFooterControls = () => (
-    <div className="p-4 space-y-3" style={{ backgroundColor: theme.surface }}>
-      <div className="flex flex-wrap gap-2">
-        {branchNodes.slice(0, 8).map((node) => {
-          const isRec = goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
-          const isSel = selectedNode?.id === node.id;
-          return (
-            <button
-              key={node.id}
-              type="button"
-              onClick={() => selectNode(node.id)}
-              className="px-3 py-1.5 text-sm font-medium tabular-nums transition-transform active:scale-95"
-              style={{
-                backgroundColor: isRec
-                  ? theme.accent
-                  : isSel
-                  ? theme.ink
-                  : theme.ground,
-                color: isRec
-                  ? theme.accentFg
-                  : isSel
-                  ? theme.ground
-                  : theme.ink,
-              }}
-            >
-              {Math.round(node.conditionalProbability * 100)}% ·{' '}
-              {node.title.length > 26 ? `${node.title.slice(0, 24)}…` : node.title}
-            </button>
-          );
-        })}
-      </div>
-
-      {selectedNode && (
-        <div
-          className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-          style={{ backgroundColor: theme.ground }}
-        >
-          <div className="space-y-1">
-            <p className="text-base font-semibold" style={{ color: theme.ink }}>
-              {selectedNode.title}
-            </p>
-            <p className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
-              Likelihood: {(selectedNode.conditionalProbability * 100).toFixed(1)}% · Cumulative
-              path: {(selectedNode.cumulativeProbability * 100).toFixed(1)}% · Horizon:{' '}
-              {selectedNode.timeHorizon}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExpandFiveMore}
-              disabled={isSimulating}
-              data-testid="expand-five-more-btn"
-              className="px-3.5 py-2 text-sm font-semibold transition-transform active:scale-95"
-              style={{
-                backgroundColor: theme.accent,
-                color: theme.accentFg,
-              }}
-            >
-              +5 more futures
-            </button>
-            <button
-              type="button"
-              onClick={() => handleStepIntoFuture()}
-              disabled={isSimulating}
-              data-testid="step-into-future-btn"
-              className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
-              style={{
-                backgroundColor: theme.surfaceAlt,
-                color: theme.ink,
-              }}
-            >
-              Show what happens next
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowInterventionBox((prev) => !prev)}
-              className="px-3 py-2 text-sm font-medium transition-transform active:scale-95"
-              style={{
-                backgroundColor: theme.surface,
-                color: theme.ink,
-              }}
-            >
-              What if I…
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showInterventionBox && (
-        <div
-          className="p-3 flex flex-col sm:flex-row gap-2"
-          style={{ backgroundColor: theme.ground }}
-        >
-          <input
-            type="text"
-            value={interventionInput}
-            onChange={(e) => setInterventionInput(e.target.value)}
-            placeholder="Describe your move (e.g. require 50% upfront payment)..."
-            className="flex-1 px-3 py-2 text-sm"
-            style={{
-              backgroundColor: theme.surface,
-              color: theme.ink,
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => handleStepIntoFuture(interventionInput)}
-            className="px-4 py-2 text-sm font-semibold"
-            style={{
-              backgroundColor: theme.accent,
-              color: theme.accentFg,
-            }}
-          >
-            Branch with this move
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  const renderScenarioPresets = () => (
-    <div
-      className="p-4 space-y-2.5 hv-motion-item hv-delay-4"
-      style={{ backgroundColor: theme.surface }}
-    >
-      <p className="text-base font-medium" style={{ color: theme.ink }}>
-        Or load a studied crossroads:
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => loadScenario(flagshipFounderSaaSPivot, 'saas-pivot')}
-          className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
-          style={{
-            backgroundColor:
-              activeScenarioSlug === 'saas-pivot' ? theme.accent : theme.ground,
-            color: activeScenarioSlug === 'saas-pivot' ? theme.accentFg : theme.ink,
-          }}
-        >
-          SaaS enterprise pivot
-        </button>
-        <button
-          type="button"
-          onClick={() => loadScenario(flagshipSeniorTechSoloAI, 'solo-ai')}
-          className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
-          style={{
-            backgroundColor:
-              activeScenarioSlug === 'solo-ai' ? theme.accent : theme.ground,
-            color: activeScenarioSlug === 'solo-ai' ? theme.accentFg : theme.ink,
-          }}
-        >
-          Leave big tech for solo AI
-        </button>
-        <button
-          type="button"
-          onClick={() => loadScenario(flagshipGlobalRelocation, 'relocation')}
-          className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
-          style={{
-            backgroundColor:
-              activeScenarioSlug === 'relocation' ? theme.accent : theme.ground,
-            color: activeScenarioSlug === 'relocation' ? theme.accentFg : theme.ink,
-          }}
-        >
-          San Francisco vs. Dubai base
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div
-      className="min-h-[100dvh] w-full transition-colors duration-300"
+      className="min-h-[100dvh] w-full relative"
       style={{ backgroundColor: theme.ground, color: theme.ink }}
     >
-      {/* Top Bar: Wordmark, Live 3-Direction Switcher, and Observatory Action */}
+      {/* FULL-SCREEN FIXED 3D SANCTUARY STAGE (100vw x 100dvh, z-index 1) */}
+      <div
+        className="fixed inset-0 w-full h-[100dvh] z-[1]"
+        style={{ backgroundColor: theme.ground }}
+      >
+        <DirectionCanvas
+          direction={direction}
+          nodes={nodeList}
+          selectedNodeId={selectedNode?.id || null}
+          goldenPathIds={goldenPathNodeIds}
+          onSelectNode={handleFocusNode}
+          scrollProgress={scrollProgress}
+          cameraMode={cameraMode}
+          className="w-full h-full"
+        />
+        <noscript>
+          <img
+            src={theme.plates[0].src}
+            alt={theme.plates[0].alt}
+            width={800}
+            height={500}
+            className="w-full h-full object-cover"
+          />
+        </noscript>
+      </div>
+
+      {/* STICKY ARCHITECTURAL HEADER BAR (z-index 30, never overlaps mobile or desktop h1) */}
       <header
-        className="w-full hv-motion-item"
+        className="sticky top-0 z-30 w-full hv-motion-item"
         style={{ backgroundColor: theme.ground, color: theme.ink }}
       >
-        <div className="max-w-[1320px] mx-auto px-6 md:px-10 py-3 min-h-[72px] flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="max-w-[1320px] mx-auto px-6 md:px-10 py-2.5 min-h-[60px] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
               className={`${theme.displayFontClass} text-xl font-semibold tracking-tight`}
@@ -715,7 +606,7 @@ export default function ArtDirectionDemo({
               HOROVEX
             </Link>
             <span
-              className="hidden lg:inline text-base"
+              className="hidden xl:inline text-base"
               style={{ color: theme.mutedInk }}
             >
               {theme.subtitle}
@@ -723,80 +614,98 @@ export default function ArtDirectionDemo({
           </div>
 
           <nav
-            aria-label="Art direction demos"
-            className="flex items-center gap-1 p-1"
+            aria-label="Sanctuary camera and scene controls"
+            className="flex flex-wrap items-center gap-1 p-1"
             style={{ backgroundColor: theme.surface }}
           >
-            {(['landscape', 'instrument', 'darkroom'] as ArtDirectionId[]).map((dirId) => {
-              const item = DIRECTION_THEMES[dirId];
-              const isActive = direction === dirId;
+            {(
+              [
+                { id: 'sanctuary', label: 'Sanctuary' },
+                { id: 'landscape', label: 'Landscape' },
+                { id: 'instrument', label: 'Instrument' },
+                { id: 'darkroom', label: 'Dark Room' },
+              ] as { id: ArtDirectionId; label: string }[]
+            ).map((item) => {
+              const isActive = direction === item.id;
               return (
                 <button
-                  key={dirId}
+                  key={item.id}
                   type="button"
-                  onClick={() => handleSwitchDirection(dirId)}
-                  data-testid={`switch-direction-${dirId}`}
-                  className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
+                  onClick={() => handleSwitchDirection(item.id)}
+                  data-testid={`switch-direction-${item.id}`}
+                  className="px-2.5 py-1.5 text-sm font-medium transition-transform active:scale-95"
                   style={{
                     backgroundColor: isActive ? theme.accent : 'transparent',
                     color: isActive ? theme.accentFg : theme.ink,
                   }}
                 >
-                  {item.name}
+                  {item.label}
                 </button>
               );
             })}
           </nav>
 
-          <div className="hidden sm:flex items-center gap-5">
-            <a
-              href="#branch-table"
-              className="text-base hover:underline"
-              style={{ color: theme.ink }}
+          <div className="hidden sm:flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setCameraMode('overview')}
+              className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
+              style={{ backgroundColor: theme.surface, color: theme.ink }}
             >
-              All futures
-            </a>
-            <a
-              href="#flagship-demos"
-              className="text-base hover:underline"
-              style={{ color: theme.ink }}
+              Full garden
+            </button>
+            <button
+              type="button"
+              onClick={() => setPureGardenView((prev) => !prev)}
+              className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
+              style={{
+                backgroundColor: pureGardenView ? theme.ink : theme.surface,
+                color: pureGardenView ? theme.ground : theme.ink,
+              }}
             >
-              Scenarios
-            </a>
+              {pureGardenView ? 'Show guide' : 'Pure 3D view'}
+            </button>
             <Link
-              href={`/observatory?demo=${activeScenarioSlug === 'custom' ? 'saas-pivot' : activeScenarioSlug}&direction=${direction}`}
+              href={`/observatory?demo=${
+                activeScenarioSlug === 'custom' ? 'saas-pivot' : activeScenarioSlug
+              }&direction=${direction}`}
               data-testid="launch-observatory-btn"
-              className="px-4 py-2.5 text-sm font-semibold transition-transform active:scale-95"
+              className="px-3.5 py-1.5 text-sm font-semibold transition-transform active:scale-95"
               style={{
                 backgroundColor: theme.accent,
                 color: theme.accentFg,
               }}
             >
-              Open full observatory
+              Enter Sanctuary
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Section 1: Distinct Art-Directed Hero per Direction */}
-      <section
-        className="w-full pt-4 pb-16 md:pt-8 md:pb-24"
-        style={{ backgroundColor: theme.ground, color: theme.ink }}
+      {/* SCROLL-DRIVEN 3D JOURNEY OVERLAYS (z-index 10, pointer-events-none on wrappers so 3D garden is clickable everywhere in open space) */}
+      <div
+        className={`relative z-10 w-full pointer-events-none transition-opacity duration-300 ${
+          pureGardenView ? 'opacity-0' : 'opacity-100'
+        }`}
       >
-        <div className="max-w-[1320px] mx-auto px-6 md:px-10">
-          {/* DIRECTION A (LANDSCAPE): Editorial Swiss Cartography Split Stage */}
-          {direction === 'landscape' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
-              <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
-                <div className="space-y-4">
+        {/* SECTION 1 (SCROLL 0.00): THE ORIGIN THRESHOLD — Open 230px top sanctuary vista on desktop so all 5 3D portals tower above */}
+        <section className="w-full pt-4 lg:pt-[220px] pb-14 md:pb-20 pointer-events-none">
+          <div className="max-w-[1320px] mx-auto px-6 md:px-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+              {/* Left Column (Cols 1-5): Headline, Supporting Line, and Live Dilemma Bar */}
+              <div
+                className="lg:col-span-5 p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-1"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
+              >
+                <div className="space-y-2.5">
                   <h1
-                    className={`${theme.displayFontClass} tracking-tight leading-[1.02] hv-motion-item hv-delay-1`}
+                    className={`${theme.displayFontClass} tracking-tight leading-[1.04] hv-motion-item hv-delay-1`}
                     style={{
-                      fontSize: 'clamp(32px, 4.0vw, 56px)',
+                      fontSize: 'clamp(30px, 4.3vw, 44px)',
                       color: theme.ink,
                     }}
                   >
-                    {theme.headline}
+                    Walk the shape of your decision.
                   </h1>
                   <p
                     className="text-base leading-relaxed hv-motion-item hv-delay-2"
@@ -808,7 +717,7 @@ export default function ArtDirectionDemo({
 
                 <form
                   onSubmit={handleSimulateDilemma}
-                  className="p-4 space-y-3 hv-motion-item hv-delay-3"
+                  className="p-3.5 space-y-2.5 hv-motion-item hv-delay-3"
                   style={{ backgroundColor: theme.surface }}
                 >
                   <label
@@ -816,9 +725,9 @@ export default function ArtDirectionDemo({
                     className="block text-base font-medium"
                     style={{ color: theme.ink }}
                   >
-                    Type a dilemma to branch in real time
+                    Type a dilemma to carve across the sanctuary
                   </label>
-                  <div className="flex flex-col sm:flex-row gap-2.5">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       id="dilemma-input"
                       type="text"
@@ -826,7 +735,7 @@ export default function ArtDirectionDemo({
                       value={dilemmaInput}
                       onChange={(e) => setDilemmaInput(e.target.value)}
                       placeholder="e.g. Pivot to enterprise contracts or raise seed?"
-                      className="flex-1 px-3.5 py-3 text-base focus:outline-none"
+                      className="flex-1 px-3 py-2 text-base focus:outline-none"
                       style={{
                         backgroundColor: theme.ground,
                         color: theme.ink,
@@ -837,172 +746,29 @@ export default function ArtDirectionDemo({
                       type="submit"
                       disabled={isSimulating}
                       data-testid="simulate-dilemma-btn"
-                      className="px-5 py-3 text-base font-semibold whitespace-nowrap transition-transform active:scale-95"
+                      className="px-4 py-2 text-base font-semibold whitespace-nowrap transition-transform active:scale-95"
                       style={{
                         backgroundColor: theme.accent,
                         color: theme.accentFg,
                       }}
                     >
-                      {isSimulating ? 'Mapping...' : theme.ctaLabel}
+                      {isSimulating ? 'Carving...' : theme.ctaLabel}
                     </button>
                   </div>
                 </form>
 
-                {renderScenarioPresets()}
-
-                {recommendedNode && (
-                  <div
-                    className="p-4 space-y-1.5 hv-motion-item hv-delay-5"
-                    style={{ backgroundColor: theme.surface }}
-                  >
-                    <p className="text-base font-semibold" style={{ color: theme.ink }}>
-                      Recommended path: {recommendedNode.title}
-                    </p>
-                    <p className="text-base tabular-nums" style={{ color: theme.mutedInk }}>
-                      {Math.round(recommendedNode.conditionalProbability * 100)}% likelihood over{' '}
-                      {recommendedNode.timeHorizon},{' '}
-                      {recommendedNode.reversibilityType === 'type_2_reversible'
-                        ? 'two-way reversible door'
-                        : 'one-way commitment'}
-                      .
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="lg:col-span-7 space-y-4 hv-motion-item hv-delay-2">
-                <div
-                  data-ui="true"
-                  className="w-full overflow-hidden"
-                  style={{ backgroundColor: theme.surface }}
-                >
-                  <div
-                    className="px-5 py-3 flex flex-wrap items-center justify-between gap-3"
-                    style={{ backgroundColor: theme.surfaceAlt }}
-                  >
-                    <span className="text-sm font-semibold" style={{ color: theme.ink }}>
-                      {rootNode?.title || 'Founder Pivot Dilemma'}
-                    </span>
-                    <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
-                      {branchNodes.length} active futures · Depth {activeDepth || 1} · Wave{' '}
-                      {maxWaveNumber || 1}
-                    </span>
-                  </div>
-
-                  <div className="w-full h-[380px] sm:h-[420px] relative">
-                    <DirectionCanvas
-                      direction={direction}
-                      nodes={nodeList}
-                      selectedNodeId={selectedNode?.id || null}
-                      goldenPathIds={goldenPathNodeIds}
-                      onSelectNode={(id) => selectNode(id)}
-                      className="w-full h-full"
-                    />
-                    <noscript>
-                      <img
-                        src={theme.plates[0].src}
-                        alt={theme.plates[0].alt}
-                        width={800}
-                        height={500}
-                        className="w-full h-full object-cover"
-                      />
-                    </noscript>
-                  </div>
-
-                  {renderStageFooterControls()}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* DIRECTION B (INSTRUMENT): Giant Grotesk Scale Framing Full-Width Horological Calibre */}
-          {direction === 'instrument' && (
-            <div className="space-y-8">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
-                <div className="lg:col-span-7 space-y-4">
-                  <h1
-                    className={`${theme.displayFontClass} tracking-tight leading-[0.98] hv-motion-item hv-delay-1`}
-                    style={{
-                      fontSize: 'clamp(34px, 4.4vw, 64px)',
-                      color: theme.ink,
-                    }}
-                  >
-                    {theme.headline}
-                  </h1>
-                  <p
-                    className="text-base leading-relaxed hv-motion-item hv-delay-2"
-                    style={{ color: theme.ink, maxWidth: '60ch' }}
-                  >
-                    {theme.lead}
+                <div className="space-y-1.5 hv-motion-item hv-delay-4">
+                  <p className="text-sm font-medium" style={{ color: theme.mutedInk }}>
+                    Or walk a studied crossroads:
                   </p>
-                </div>
-
-                <div className="lg:col-span-5 space-y-3">
-                  <form
-                    onSubmit={handleSimulateDilemma}
-                    className="p-4 space-y-3 hv-motion-item hv-delay-2"
-                    style={{ backgroundColor: theme.surface }}
-                  >
-                    <label
-                      htmlFor="dilemma-input"
-                      className="block text-base font-medium"
-                      style={{ color: theme.ink }}
-                    >
-                      Type a dilemma to set the calibre train
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-2.5">
-                      <input
-                        id="dilemma-input"
-                        type="text"
-                        name="prompt"
-                        value={dilemmaInput}
-                        onChange={(e) => setDilemmaInput(e.target.value)}
-                        placeholder="e.g. Pivot to enterprise contracts or raise seed?"
-                        className="flex-1 px-3.5 py-2.5 text-base focus:outline-none"
-                        style={{
-                          backgroundColor: theme.ground,
-                          color: theme.ink,
-                          border: `1px solid ${theme.mutedInk}`,
-                        }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={isSimulating}
-                        data-testid="simulate-dilemma-btn"
-                        className="px-5 py-2.5 text-base font-semibold whitespace-nowrap transition-transform active:scale-95"
-                        style={{
-                          backgroundColor: theme.accent,
-                          color: theme.accentFg,
-                        }}
-                      >
-                        {isSimulating ? 'Setting...' : theme.ctaLabel}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              {/* Full-Width 12-Column Horological Movement Stage */}
-              <div
-                data-ui="true"
-                className="w-full overflow-hidden hv-motion-item hv-delay-3"
-                style={{ backgroundColor: theme.surface }}
-              >
-                <div
-                  className="px-5 py-3 flex flex-wrap items-center justify-between gap-3"
-                  style={{ backgroundColor: theme.surfaceAlt }}
-                >
-                  <span className="text-sm font-semibold" style={{ color: theme.ink }}>
-                    Calibre 01 · {rootNode?.title || 'Founder Pivot Dilemma'}
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => loadScenario(flagshipFounderSaaSPivot, 'saas-pivot')}
-                      className="px-3 py-1 text-sm font-medium"
+                      className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
                       style={{
                         backgroundColor:
-                          activeScenarioSlug === 'saas-pivot' ? theme.accent : theme.ground,
+                          activeScenarioSlug === 'saas-pivot' ? theme.accent : theme.surface,
                         color:
                           activeScenarioSlug === 'saas-pivot' ? theme.accentFg : theme.ink,
                       }}
@@ -1012,10 +778,10 @@ export default function ArtDirectionDemo({
                     <button
                       type="button"
                       onClick={() => loadScenario(flagshipSeniorTechSoloAI, 'solo-ai')}
-                      className="px-3 py-1 text-sm font-medium"
+                      className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
                       style={{
                         backgroundColor:
-                          activeScenarioSlug === 'solo-ai' ? theme.accent : theme.ground,
+                          activeScenarioSlug === 'solo-ai' ? theme.accent : theme.surface,
                         color:
                           activeScenarioSlug === 'solo-ai' ? theme.accentFg : theme.ink,
                       }}
@@ -1025,10 +791,10 @@ export default function ArtDirectionDemo({
                     <button
                       type="button"
                       onClick={() => loadScenario(flagshipGlobalRelocation, 'relocation')}
-                      className="px-3 py-1 text-sm font-medium"
+                      className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
                       style={{
                         backgroundColor:
-                          activeScenarioSlug === 'relocation' ? theme.accent : theme.ground,
+                          activeScenarioSlug === 'relocation' ? theme.accent : theme.surface,
                         color:
                           activeScenarioSlug === 'relocation' ? theme.accentFg : theme.ink,
                       }}
@@ -1037,625 +803,514 @@ export default function ArtDirectionDemo({
                     </button>
                   </div>
                 </div>
-
-                <div className="w-full h-[380px] sm:h-[440px] relative">
-                  <DirectionCanvas
-                    direction={direction}
-                    nodes={nodeList}
-                    selectedNodeId={selectedNode?.id || null}
-                    goldenPathIds={goldenPathNodeIds}
-                    onSelectNode={(id) => selectNode(id)}
-                    className="w-full h-full"
-                  />
-                  <noscript>
-                    <img
-                      src={theme.plates[0].src}
-                      alt={theme.plates[0].alt}
-                      width={800}
-                      height={500}
-                      className="w-full h-full object-cover"
-                    />
-                  </noscript>
-                </div>
-
-                {renderStageFooterControls()}
               </div>
-            </div>
-          )}
 
-          {/* DIRECTION C (DARK ROOM): Full-Width Physically Lit Gallery Above Quiet Bottom Editorial Bench */}
-          {direction === 'darkroom' && (
-            <div className="space-y-6">
+              {/* Right Column (Cols 7-12): Low-Profile Interactive Monolith Flight Strip */}
               <div
                 data-ui="true"
-                className="w-full overflow-hidden hv-motion-item hv-delay-1"
-                style={{ backgroundColor: theme.surface }}
+                className="lg:col-span-6 lg:col-start-7 p-5 space-y-3.5 pointer-events-auto hv-motion-item hv-delay-2"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
-                <div
-                  className="px-5 py-2.5 flex flex-wrap items-center justify-between gap-3"
-                  style={{ backgroundColor: theme.surfaceAlt }}
-                >
-                  <span className="text-sm font-semibold" style={{ color: theme.ink }}>
-                    Exhibition Room · {rootNode?.title || 'Founder Pivot Dilemma'}
-                  </span>
-                  <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
-                    {branchNodes.length} lit steles · Depth {activeDepth || 1} · Wave{' '}
-                    {maxWaveNumber || 1}
-                  </span>
-                </div>
-
-                <div className="w-full h-[270px] sm:h-[360px] lg:h-[400px] relative">
-                  <DirectionCanvas
-                    direction={direction}
-                    nodes={nodeList}
-                    selectedNodeId={selectedNode?.id || null}
-                    goldenPathIds={goldenPathNodeIds}
-                    onSelectNode={(id) => selectNode(id)}
-                    className="w-full h-full"
-                  />
-                  <noscript>
-                    <img
-                      src={theme.plates[0].src}
-                      alt={theme.plates[0].alt}
-                      width={800}
-                      height={500}
-                      className="w-full h-full object-cover"
-                    />
-                  </noscript>
-                </div>
-              </div>
-
-              {/* Quiet Editorial Type & Dilemma Bench Along Bottom Edge of First Screen */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pt-1">
-                <div className="lg:col-span-5 space-y-4">
-                  <h1
-                    className={`${theme.displayFontClass} tracking-tight leading-[1.02] hv-motion-item hv-delay-2`}
-                    style={{
-                      fontSize: 'clamp(32px, 3.8vw, 54px)',
-                      color: theme.ink,
-                    }}
+                <div className="flex flex-wrap items-center justify-between gap-2 hv-motion-item hv-delay-3">
+                  <div>
+                    <p className="text-base font-semibold" style={{ color: theme.ink }}>
+                      {rootNode?.title || 'Founder Pivot Dilemma'}
+                    </p>
+                    <p className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
+                      Click any portal in the 3D garden or below to fly the camera into its basin
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCameraMode('overview')}
+                    className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
+                    style={{ backgroundColor: theme.surface, color: theme.ink }}
                   >
-                    {theme.headline}
-                  </h1>
-                  <p
-                    className="text-base leading-relaxed hv-motion-item hv-delay-3"
-                    style={{ color: theme.ink, maxWidth: '54ch' }}
-                  >
-                    {theme.lead}
-                  </p>
-                  {renderScenarioPresets()}
+                    Reset camera
+                  </button>
                 </div>
 
-                <div className="lg:col-span-7 space-y-4">
-                  <form
-                    onSubmit={handleSimulateDilemma}
-                    className="p-4 space-y-3 hv-motion-item hv-delay-3"
-                    style={{ backgroundColor: theme.surface }}
-                  >
-                    <label
-                      htmlFor="dilemma-input"
-                      className="block text-base font-medium"
-                      style={{ color: theme.ink }}
-                    >
-                      Type a dilemma to light in the gallery
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-2.5">
-                      <input
-                        id="dilemma-input"
-                        type="text"
-                        name="prompt"
-                        value={dilemmaInput}
-                        onChange={(e) => setDilemmaInput(e.target.value)}
-                        placeholder="e.g. Pivot to enterprise contracts or raise seed?"
-                        className="flex-1 px-3.5 py-2.5 text-base focus:outline-none"
-                        style={{
-                          backgroundColor: theme.ground,
-                          color: theme.ink,
-                          border: `1px solid ${theme.mutedInk}`,
-                        }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={isSimulating}
-                        data-testid="simulate-dilemma-btn"
-                        className="px-5 py-2.5 text-base font-semibold whitespace-nowrap transition-transform active:scale-95"
-                        style={{
-                          backgroundColor: theme.accent,
-                          color: theme.accentFg,
-                        }}
-                      >
-                        {isSimulating ? 'Lighting...' : theme.ctaLabel}
-                      </button>
-                    </div>
-                  </form>
-
-                  <div data-ui="true">{renderStageFooterControls()}</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Section 2: Branch Probability Table & Live Sensitivity Levers */}
-      <section
-        id="branch-table"
-        className="w-full py-16 md:py-24"
-        style={{ backgroundColor: theme.surface, color: theme.ink }}
-      >
-        <div className="max-w-[1320px] mx-auto px-6 md:px-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Left Column: Semantic Table of Futures */}
-          <div className="lg:col-span-7 space-y-5 hv-motion-item hv-delay-3">
-            <h2
-              className={`${theme.displayFontClass} tracking-tight leading-tight`}
-              style={{ fontSize: 'clamp(24px, 2.4vw, 34px)', color: theme.ink }}
-            >
-              How the paths divide
-            </h2>
-            <p
-              className="text-base leading-relaxed"
-              style={{ color: theme.ink, maxWidth: '60ch' }}
-            >
-              The first wave maps five baseline outcomes covering 80% of likelihood, while holding
-              20% in reserve for contrarian and tail-risk waves. Click any row to focus the 3D
-              model.
-            </p>
-
-            <div
-              data-ui="true"
-              className="overflow-x-auto"
-              style={{ backgroundColor: theme.ground }}
-            >
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr style={{ backgroundColor: theme.surfaceAlt }}>
-                    <th className="py-3 px-4 text-sm font-semibold" style={{ color: theme.ink }}>
-                      Future branch
-                    </th>
-                    <th className="py-3 px-4 text-sm font-semibold" style={{ color: theme.ink }}>
-                      Horizon
-                    </th>
-                    <th className="py-3 px-4 text-sm font-semibold" style={{ color: theme.ink }}>
-                      Door type
-                    </th>
-                    <th
-                      className="py-3 px-4 text-sm font-semibold text-right tabular-nums"
-                      style={{ color: theme.ink }}
-                    >
-                      Likelihood
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {branchNodes.map((node) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 hv-motion-item hv-delay-4">
+                  {branchNodes.slice(0, 6).map((node) => {
                     const isRec =
                       goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
                     const isSel = selectedNode?.id === node.id;
                     return (
-                      <tr
+                      <button
                         key={node.id}
-                        onClick={() => selectNode(node.id)}
-                        className="cursor-pointer transition-colors"
+                        type="button"
+                        onClick={() => handleFocusNode(node.id)}
+                        className="p-2.5 text-left transition-transform active:scale-95 flex items-center justify-between gap-3"
                         style={{
-                          backgroundColor: isSel ? theme.surfaceAlt : theme.ground,
+                          backgroundColor: isRec
+                            ? theme.accent
+                            : isSel
+                            ? theme.ink
+                            : theme.surface,
+                          color: isRec
+                            ? theme.accentFg
+                            : isSel
+                            ? theme.ground
+                            : theme.ink,
                         }}
                       >
-                        <td className="py-3.5 px-4 text-base font-medium" style={{ color: theme.ink }}>
+                        <span className="text-sm font-medium truncate">
                           {node.title}
-                          {isRec ? ' (Recommended)' : ''}
-                        </td>
-                        <td
-                          className="py-3.5 px-4 text-sm tabular-nums"
-                          style={{ color: theme.mutedInk }}
-                        >
-                          {node.timeHorizon}
-                        </td>
-                        <td className="py-3.5 px-4 text-sm" style={{ color: theme.mutedInk }}>
-                          {node.reversibilityType === 'type_2_reversible'
-                            ? 'Two-way reversible'
-                            : 'One-way commitment'}
-                        </td>
-                        <td
-                          className="py-3.5 px-4 text-base font-semibold text-right tabular-nums"
-                          style={{ color: isRec ? theme.accent : theme.ink }}
-                        >
-                          {(node.conditionalProbability * 100).toFixed(1)}%
-                        </td>
-                      </tr>
+                        </span>
+                        <span className="text-sm font-semibold tabular-nums shrink-0">
+                          {Math.round(node.conditionalProbability * 100)}%
+                        </span>
+                      </button>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </div>
 
-          {/* Right Column: Live 60 FPS Sensitivity Levers */}
-          <div
-            className="lg:col-span-5 p-6 space-y-5 hv-motion-item hv-delay-4"
-            style={{ backgroundColor: theme.ground }}
-          >
-            <h2
-              className={`${theme.displayFontClass} tracking-tight leading-tight`}
-              style={{ fontSize: 'clamp(24px, 2.4vw, 34px)', color: theme.ink }}
-            >
-              Shift the odds live
-            </h2>
-            <p
-              className="text-base leading-relaxed"
-              style={{ color: theme.ink, maxWidth: '54ch' }}
-            >
-              Drag any lever to test how faster shipping, extra runway, or market demand shifts
-              the probabilities across all branches in real time.
-            </p>
-
-            <div data-ui="true" className="space-y-4">
-              {[
-                {
-                  key: 'executionVelocity' as keyof SliderDeltas,
-                  label: 'Shipping and sales speed',
-                },
-                {
-                  key: 'capitalBuffer' as keyof SliderDeltas,
-                  label: 'Liquid cash runway buffer',
-                },
-                {
-                  key: 'marketTailwind' as keyof SliderDeltas,
-                  label: 'Customer demand tailwind',
-                },
-                {
-                  key: 'skillPreparation' as keyof SliderDeltas,
-                  label: 'Team technical readiness',
-                },
-              ].map((lever) => {
-                const val = sensitivityLevers[lever.key];
-                const pct = Math.round(val * 100);
-                return (
-                  <div key={lever.key} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-base">
-                      <label
-                        htmlFor={`lever-${lever.key}`}
-                        className="font-medium"
-                        style={{ color: theme.ink }}
-                      >
-                        {lever.label}
-                      </label>
-                      <span
-                        className="font-semibold tabular-nums"
-                        style={{ color: theme.ink }}
-                      >
-                        {pct > 0 ? `+${pct}%` : `${pct}%`}
-                      </span>
-                    </div>
-                    <input
-                      id={`lever-${lever.key}`}
-                      type="range"
-                      min="-1"
-                      max="1"
-                      step="0.05"
-                      value={val}
-                      onChange={(e) =>
-                        handleLeverChange(lever.key, parseFloat(e.target.value))
-                      }
-                      className="w-full h-2 cursor-pointer"
-                      style={{ accentColor: theme.accent }}
-                    />
-                  </div>
-                );
-              })}
-
-              <div className="pt-2 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={handleResetLevers}
-                  className="px-4 py-2.5 text-sm font-medium"
-                  style={{ backgroundColor: theme.surface, color: theme.ink }}
-                >
-                  Reset levers to baseline
-                </button>
-
-                {selectedNode && selectedNode.parentId && (
-                  <button
-                    type="button"
-                    onClick={() => collapseWavefunction(selectedNode.id)}
-                    className="px-4 py-2.5 text-sm font-semibold"
-                    style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                {selectedNode && (
+                  <div
+                    className="p-3 flex flex-wrap items-center justify-between gap-3 hv-motion-item hv-delay-5"
+                    style={{ backgroundColor: theme.surface }}
                   >
-                    Mark what actually happened
-                  </button>
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold" style={{ color: theme.ink }}>
+                        Focused portal: {selectedNode.title}
+                      </p>
+                      <p className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
+                        Likelihood {(selectedNode.conditionalProbability * 100).toFixed(1)}% ·
+                        Cumulative {(selectedNode.cumulativeProbability * 100).toFixed(1)}% ·{' '}
+                        {selectedNode.timeHorizon}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleFocusNode(selectedNode.id)}
+                      className="px-3 py-1.5 text-sm font-semibold"
+                      style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                    >
+                      Fly to portal
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Section 3: Visual Atlas of the Active Direction (4 Raster Plates in 2x2 Grid) */}
-      <section
-        id="architecture"
-        className="w-full py-16 md:py-24"
-        style={{ backgroundColor: theme.ground, color: theme.ink }}
-      >
-        <div className="max-w-[1320px] mx-auto px-6 md:px-10 space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-end">
-            <div className="lg:col-span-6">
-              <h2
-                className={`${theme.displayFontClass} tracking-tight leading-tight hv-motion-item hv-delay-5`}
-                style={{ fontSize: 'clamp(24px, 2.4vw, 34px)', color: theme.ink }}
+        {/* SECTION 2 (SCROLL ~0.33): THE BIFURCATION BASIN */}
+        <section
+          id="bifurcation-basin"
+          className="w-full py-14 md:py-20 pointer-events-none"
+        >
+          <div className="max-w-[1320px] mx-auto px-6 md:px-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+              {/* Left Column (Cols 1-5): Watershed Prose & Wave Expansion Control */}
+              <div
+                className="lg:col-span-5 p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-3"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
-                Four views of the model
-              </h2>
-            </div>
-            <div className="lg:col-span-6">
-              <p
-                className="text-base leading-relaxed hv-motion-item hv-delay-5"
-                style={{ color: theme.ink, maxWidth: '60ch' }}
-              >
-                {theme.ideaSentence}
-              </p>
-            </div>
-          </div>
+                <h2
+                  className={`${theme.displayFontClass} tracking-tight leading-tight hv-motion-item hv-delay-4`}
+                  style={{ fontSize: 'clamp(24px, 2.3vw, 32px)', color: theme.ink }}
+                >
+                  Five paths carved by likelihood.
+                </h2>
+                <p
+                  className="text-base leading-relaxed hv-motion-item hv-delay-5"
+                  style={{ color: theme.ink, maxWidth: '54ch' }}
+                >
+                  From the origin threshold, water divides into five carved travertine valleys
+                  holding eighty percent of baseline likelihood. Twenty percent stays in reserve
+                  so you can raise contrarian and tail-risk portals out of the mist.
+                </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {theme.plates.map((plate, idx) => (
+                <div
+                  className="p-4 space-y-3 hv-motion-item hv-delay-6"
+                  style={{ backgroundColor: theme.surface }}
+                >
+                  <div className="flex items-center justify-between text-sm tabular-nums">
+                    <span className="font-semibold" style={{ color: theme.ink }}>
+                      Active portals: {branchNodes.length} · Wave {maxWaveNumber || 1}
+                    </span>
+                    <span style={{ color: theme.mutedInk }}>
+                      Reserve mass: {Math.round(unexploredMass * 100)}%
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleExpandFiveMore}
+                      disabled={isSimulating}
+                      data-testid="expand-five-more-btn"
+                      className="px-4 py-2.5 text-sm font-semibold transition-transform active:scale-95"
+                      style={{
+                        backgroundColor: theme.accent,
+                        color: theme.accentFg,
+                      }}
+                    >
+                      +5 more futures
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCameraMode('overview')}
+                      className="px-4 py-2.5 text-sm font-medium transition-transform active:scale-95"
+                      style={{ backgroundColor: theme.ground, color: theme.ink }}
+                    >
+                      View full watershed
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column (Cols 7-12): Alabaster Relief Plate 1 */}
               <figure
-                key={plate.src}
-                className={`space-y-4 hv-motion-item hv-delay-${(idx % 4) + 5}`}
+                className="lg:col-span-6 lg:col-start-7 p-5 space-y-3 pointer-events-auto hv-motion-item hv-delay-4"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <img
-                  src={plate.src}
-                  alt={plate.alt}
+                  src={theme.plates[0].src}
+                  alt={theme.plates[0].alt}
                   width={800}
                   height={500}
-                  className="w-full h-56 sm:h-64 object-cover block"
+                  className="w-full h-52 sm:h-60 object-cover block hv-motion-item hv-delay-5"
                 />
-                <figcaption className="space-y-1.5">
+                <figcaption className="space-y-1 hv-motion-item hv-delay-6">
                   <p className="text-xl font-semibold" style={{ color: theme.ink }}>
-                    {plate.title}
+                    {theme.plates[0].title}
                   </p>
                   <p
                     className="text-base leading-relaxed"
-                    style={{ color: theme.ink, maxWidth: '58ch' }}
+                    style={{ color: theme.ink, maxWidth: '56ch' }}
                   >
-                    {plate.caption}
+                    {theme.plates[0].caption}
                   </p>
                 </figcaption>
               </figure>
-            ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Section 4: Flagship Showcases & Fourteen-Day Action Plan */}
-      <section
-        id="flagship-demos"
-        className="w-full py-16 md:py-24"
-        style={{ backgroundColor: theme.surface, color: theme.ink }}
-      >
-        <div className="max-w-[1320px] mx-auto px-6 md:px-10 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Left Column: 3 Curated Flagship Crossroads */}
-          <div className="lg:col-span-6 space-y-6 hv-motion-item hv-delay-6">
-            <h2
-              className={`${theme.displayFontClass} tracking-tight leading-tight`}
-              style={{ fontSize: 'clamp(24px, 2.4vw, 34px)', color: theme.ink }}
-            >
-              Three real decisions
-            </h2>
-            <p
-              className="text-base leading-relaxed"
-              style={{ color: theme.ink, maxWidth: '58ch' }}
-            >
-              Load any of the three complete decision trees into the live 3D stage above, or open
-              them inside the full-screen observatory.
-            </p>
-
-            <div className="space-y-6">
-              {[
-                {
-                  id: 'saas-pivot',
-                  category: 'Founder Crossroads',
-                  scenario: flagshipFounderSaaSPivot,
-                  summary:
-                    'Bootstrap to enterprise cashflow with 14 months runway vs. raising a $1.2M seed round at 20% dilution. Recommended path: Bootstrap Enterprise Pivot (32% likelihood).',
-                },
-                {
-                  id: 'solo-ai',
-                  category: 'Executive Career',
-                  scenario: flagshipSeniorTechSoloAI,
-                  summary:
-                    'Staff engineer with $220k savings weighing an immediate leap into solo AI products against slow night-and-weekend incubation. Recommended path: Full Leap 3 Micro-AI Launches (30% likelihood).',
-                },
-                {
-                  id: 'relocation',
-                  category: 'Sovereign Lifestyle',
-                  scenario: flagshipGlobalRelocation,
-                  summary:
-                    'Remote founder at $80k monthly profit comparing San Francisco AI network density, Dubai 0% tax residency, and Singapore HQ. Recommended path: SF AI Base + Holding Structure (35% likelihood).',
-                },
-              ].map((item) => (
-                <div
-                  key={item.id}
-                  className="space-y-2.5 hv-motion-item hv-delay-7"
+        {/* SECTION 3 (SCROLL ~0.66): THE GOLDEN PATH SANCTUARY */}
+        <section
+          id="golden-path-sanctuary"
+          className="w-full py-14 md:py-20 pointer-events-none"
+        >
+          <div className="max-w-[1320px] mx-auto px-6 md:px-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+              {/* Left Column (Cols 1-5): Strategic Mentor Verdict & Fourteen-Day Plan */}
+              <div
+                className="lg:col-span-5 p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-5"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
+              >
+                <h2
+                  className={`${theme.displayFontClass} tracking-tight leading-tight hv-motion-item hv-delay-6`}
+                  style={{ fontSize: 'clamp(24px, 2.3vw, 32px)', color: theme.ink }}
                 >
-                  <p className="text-xl font-semibold" style={{ color: theme.ink }}>
-                    {item.category} · {item.scenario.title}
-                  </p>
-                  <p
-                    className="text-base leading-relaxed"
-                    style={{ color: theme.ink, maxWidth: '58ch' }}
+                  Follow the calmest water.
+                </h2>
+                <p
+                  className="text-base leading-relaxed hv-motion-item hv-delay-7"
+                  style={{ color: theme.ink, maxWidth: '54ch' }}
+                >
+                  Backward induction isolates the trajectory that maximizes long-term utility
+                  while guarding against irreversible ruin. A glacial mineral channel and overhead
+                  skylight beam illuminate this recommended portal.
+                </p>
+
+                {recommendedNode && (
+                  <div
+                    className="p-4 space-y-2.5 hv-motion-item hv-delay-8"
+                    style={{ backgroundColor: theme.surface }}
                   >
-                    {item.summary}
+                    <p className="text-base font-semibold" style={{ color: theme.ink }}>
+                      Recommended path: {recommendedNode.title} (
+                      {Math.round(recommendedNode.conditionalProbability * 100)}%)
+                    </p>
+                    <p className="text-base leading-relaxed" style={{ color: theme.ink }}>
+                      First week move: Lock a 50% annual prepayment pilot before expanding burn.
+                      Checkpoint: {recommendedNode.tripwires?.[0] || 'Signed pilot within 45 days'}.
+                    </p>
+                    <div className="pt-1 flex flex-wrap gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => handleFocusNode(recommendedNode.id)}
+                        className="px-3.5 py-2 text-sm font-semibold transition-transform active:scale-95"
+                        style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                      >
+                        Fly to recommended portal
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleCopyBrief}
+                        className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
+                        style={{ backgroundColor: theme.ground, color: theme.ink }}
+                      >
+                        {copiedBrief ? 'Brief copied' : 'Copy decision brief'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column (Cols 7-12): Downstream Depth Recursion & Alabaster Relief Plate 2 */}
+              <div
+                className="lg:col-span-6 lg:col-start-7 p-5 space-y-4 pointer-events-auto hv-motion-item hv-delay-6"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
+              >
+                <div
+                  className="p-4 space-y-3 hv-motion-item hv-delay-7"
+                  style={{ backgroundColor: theme.surface }}
+                >
+                  <p className="text-base font-semibold" style={{ color: theme.ink }}>
+                    Step deeper into {selectedNode?.title || 'the focused portal'} (Depth{' '}
+                    {activeDepth || 1})
                   </p>
-                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <div className="flex flex-wrap gap-2.5">
                     <button
                       type="button"
-                      onClick={() => {
-                        loadScenario(item.scenario, item.id);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      className="px-3.5 py-2 text-sm font-semibold"
+                      onClick={() => handleStepIntoFuture()}
+                      disabled={isSimulating}
+                      data-testid="step-into-future-btn"
+                      className="px-4 py-2 text-sm font-semibold transition-transform active:scale-95"
                       style={{ backgroundColor: theme.accent, color: theme.accentFg }}
                     >
-                      Load in 3D stage
+                      Show what happens next
                     </button>
                     <button
                       type="button"
-                      onClick={() =>
-                        router.push(`/observatory?demo=${item.id}&direction=${direction}`)
-                      }
-                      className="px-3.5 py-2 text-sm font-medium"
+                      onClick={() => setShowInterventionBox((prev) => !prev)}
+                      className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
                       style={{ backgroundColor: theme.ground, color: theme.ink }}
                     >
-                      Open in observatory
+                      What if I…
                     </button>
-                    <a
-                      href={`/observatory?demo=${item.id}&direction=${direction}`}
-                      className="sr-only"
+                    {selectedNode && selectedNode.parentId && (
+                      <button
+                        type="button"
+                        onClick={() => collapseWavefunction(selectedNode.id)}
+                        className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
+                        style={{ backgroundColor: theme.ground, color: theme.ink }}
+                      >
+                        Mark what actually happened
+                      </button>
+                    )}
+                  </div>
+
+                  {showInterventionBox && (
+                    <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                      <input
+                        type="text"
+                        value={interventionInput}
+                        onChange={(e) => setInterventionInput(e.target.value)}
+                        placeholder="Describe your move (e.g. require 50% upfront payment)..."
+                        className="flex-1 px-3 py-2 text-sm"
+                        style={{ backgroundColor: theme.ground, color: theme.ink }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleStepIntoFuture(interventionInput)}
+                        className="px-4 py-2 text-sm font-semibold"
+                        style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                      >
+                        Branch with this move
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <figure className="space-y-2.5 hv-motion-item hv-delay-8">
+                  <img
+                    src={theme.plates[1].src}
+                    alt={theme.plates[1].alt}
+                    width={800}
+                    height={500}
+                    className="w-full h-48 sm:h-52 object-cover block"
+                  />
+                  <figcaption className="space-y-1">
+                    <p className="text-xl font-semibold" style={{ color: theme.ink }}>
+                      {theme.plates[1].title}
+                    </p>
+                    <p
+                      className="text-base leading-relaxed"
+                      style={{ color: theme.ink, maxWidth: '56ch' }}
                     >
-                      Explore {item.category} in observatory
-                    </a>
+                      {theme.plates[1].caption}
+                    </p>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 4 (SCROLL 1.00): SENSITIVITY CURRENTS & ARCHITECTURAL PLATES */}
+        <section
+          id="flagship-demos"
+          className="w-full py-14 md:py-20 pointer-events-none"
+        >
+          <div className="max-w-[1320px] mx-auto px-6 md:px-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Left Column (Cols 1-5): Live Sensitivity Levers */}
+              <div
+                className="lg:col-span-5 p-6 space-y-5 pointer-events-auto hv-motion-item hv-delay-7"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
+              >
+                <h2
+                  className={`${theme.displayFontClass} tracking-tight leading-tight hv-motion-item hv-delay-8`}
+                  style={{ fontSize: 'clamp(24px, 2.3vw, 32px)', color: theme.ink }}
+                >
+                  Test the currents before you step.
+                </h2>
+                <p
+                  className="text-base leading-relaxed hv-motion-item hv-delay-8"
+                  style={{ color: theme.ink, maxWidth: '54ch' }}
+                >
+                  Drag any lever to test how faster shipping, extra capital runway, or customer
+                  demand reshapes the water channels and portal heights across the garden in real
+                  time.
+                </p>
+
+                <div data-ui="true" className="space-y-3.5">
+                  {[
+                    {
+                      key: 'executionVelocity' as keyof SliderDeltas,
+                      label: 'Shipping and sales speed',
+                    },
+                    {
+                      key: 'capitalBuffer' as keyof SliderDeltas,
+                      label: 'Liquid cash runway buffer',
+                    },
+                    {
+                      key: 'marketTailwind' as keyof SliderDeltas,
+                      label: 'Customer demand tailwind',
+                    },
+                    {
+                      key: 'skillPreparation' as keyof SliderDeltas,
+                      label: 'Team technical readiness',
+                    },
+                  ].map((lever) => {
+                    const val = sensitivityLevers[lever.key];
+                    const pct = Math.round(val * 100);
+                    return (
+                      <div key={lever.key} className="space-y-1">
+                        <div className="flex items-center justify-between text-base">
+                          <label
+                            htmlFor={`lever-${lever.key}`}
+                            className="font-medium"
+                            style={{ color: theme.ink }}
+                          >
+                            {lever.label}
+                          </label>
+                          <span
+                            className="font-semibold tabular-nums"
+                            style={{ color: theme.ink }}
+                          >
+                            {pct > 0 ? `+${pct}%` : `${pct}%`}
+                          </span>
+                        </div>
+                        <input
+                          id={`lever-${lever.key}`}
+                          type="range"
+                          min="-1"
+                          max="1"
+                          step="0.05"
+                          value={val}
+                          onChange={(e) =>
+                            handleLeverChange(lever.key, parseFloat(e.target.value))
+                          }
+                          className="w-full h-2 cursor-pointer"
+                          style={{ accentColor: theme.accent }}
+                        />
+                      </div>
+                    );
+                  })}
+
+                  <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={handleResetLevers}
+                      className="px-4 py-2 text-sm font-medium"
+                      style={{ backgroundColor: theme.surface, color: theme.ink }}
+                    >
+                      Reset levers to baseline
+                    </button>
+                    <Link
+                      href={`/observatory?demo=${
+                        activeScenarioSlug === 'custom' ? 'saas-pivot' : activeScenarioSlug
+                      }&direction=${direction}`}
+                      className="px-4 py-2 text-sm font-semibold"
+                      style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                    >
+                      Open full-screen sanctuary
+                    </Link>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Column: Fourteen-Day Action Plan & Observable Tripwires */}
-          <div
-            className="lg:col-span-6 p-6 space-y-6 hv-motion-item hv-delay-8"
-            style={{ backgroundColor: theme.ground }}
-          >
-            <h2
-              className={`${theme.displayFontClass} tracking-tight leading-tight`}
-              style={{ fontSize: 'clamp(24px, 2.4vw, 34px)', color: theme.ink }}
-            >
-              Fourteen-day plan
-            </h2>
-            <p
-              className="text-base leading-relaxed"
-              style={{ color: theme.ink, maxWidth: '58ch' }}
-            >
-              Once the Bellman solver isolates the recommended path, it pairs the choice with concrete
-              first-fortnight actions and checkpoints that tell you early if reality is drifting.
-            </p>
-
-            <div className="space-y-5">
-              <div className="space-y-1.5">
-                <p className="text-xl font-semibold" style={{ color: theme.ink }}>
-                  First three days: Lock term sheet and pilot bounds
-                </p>
-                <p className="text-base leading-relaxed" style={{ color: theme.ink, maxWidth: '58ch' }}>
-                  Set a hard walk-away ceiling on equity dilution and deliver a scoped annual prepay
-                  pilot agreement to your lead enterprise customer (+18% odds shift).
-                </p>
               </div>
 
-              <div className="space-y-1.5">
-                <p className="text-xl font-semibold" style={{ color: theme.ink }}>
-                  First week: Ship compliance bridge and SLA
-                </p>
-                <p className="text-base leading-relaxed" style={{ color: theme.ink, maxWidth: '58ch' }}>
-                  Complete the security architecture review and require 50% upfront payment upon
-                  pilot kickoff so working capital never dips below 12 months (+14% odds shift).
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <p className="text-xl font-semibold" style={{ color: theme.ink }}>
-                  Second week: Verify the first observable checkpoint
-                </p>
-                <p className="text-base leading-relaxed" style={{ color: theme.ink, maxWidth: '58ch' }}>
-                  Checkpoint: {recommendedNode?.tripwires?.[0] || 'Signed annual pilot within 45 days'}
-                  . If missed, pause outbound hiring and revert to lean self-serve cashflow.
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-2 flex flex-wrap items-center justify-between gap-4">
-              <button
-                type="button"
-                onClick={handleCopyBrief}
-                className="px-5 py-3 text-base font-semibold transition-transform active:scale-95"
-                style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+              {/* Right Column (Cols 7-12): Alabaster Relief Plates 3 & 4 + Studied Crossroads Links */}
+              <div
+                className="lg:col-span-6 lg:col-start-7 p-5 space-y-5 pointer-events-auto hv-motion-item hv-delay-8"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
-                {copiedBrief ? 'Decision brief copied' : 'Copy markdown decision brief'}
-              </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {theme.plates.slice(2, 4).map((plate) => (
+                    <figure key={plate.src} className="space-y-2.5 hv-motion-item hv-delay-8">
+                      <img
+                        src={plate.src}
+                        alt={plate.alt}
+                        width={800}
+                        height={500}
+                        className="w-full h-44 object-cover block"
+                      />
+                      <figcaption className="space-y-1">
+                        <p className="text-xl font-semibold" style={{ color: theme.ink }}>
+                          {plate.title}
+                        </p>
+                        <p
+                          className="text-base leading-relaxed"
+                          style={{ color: theme.ink }}
+                        >
+                          {plate.caption}
+                        </p>
+                      </figcaption>
+                    </figure>
+                  ))}
+                </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  router.push(
-                    `/observatory?demo=${
-                      activeScenarioSlug === 'custom' ? 'saas-pivot' : activeScenarioSlug
-                    }&direction=${direction}`
-                  )
-                }
-                className="px-5 py-3 text-base font-medium"
-                style={{ backgroundColor: theme.surface, color: theme.ink }}
-              >
-                Open full workspace
-              </button>
+                <div
+                  className="p-4 flex flex-wrap items-center justify-between gap-3 hv-motion-item hv-delay-8"
+                  style={{ backgroundColor: theme.surface }}
+                >
+                  <span className="text-base font-semibold" style={{ color: theme.ink }}>
+                    Explore studied crossroads in the full sanctuary:
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <Link
+                      href={`/observatory?demo=saas-pivot&direction=${direction}`}
+                      className="px-3 py-1.5 text-sm font-medium"
+                      style={{ backgroundColor: theme.ground, color: theme.ink }}
+                    >
+                      SaaS pivot
+                    </Link>
+                    <Link
+                      href={`/observatory?demo=solo-ai&direction=${direction}`}
+                      className="px-3 py-1.5 text-sm font-medium"
+                      style={{ backgroundColor: theme.ground, color: theme.ink }}
+                    >
+                      Solo AI leap
+                    </Link>
+                    <Link
+                      href={`/observatory?demo=relocation&direction=${direction}`}
+                      className="px-3 py-1.5 text-sm font-medium"
+                      style={{ backgroundColor: theme.ground, color: theme.ink }}
+                    >
+                      SF vs. Dubai
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Footer: Full-Width Designed Close & Direction Switcher */}
-      <footer
-        className="w-full py-12"
-        style={{ backgroundColor: theme.ground, color: theme.ink }}
-      >
-        <div className="max-w-[1320px] mx-auto px-6 md:px-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-1">
-            <p className={`${theme.displayFontClass} text-xl font-semibold`} style={{ color: theme.ink }}>
-              HOROVEX
-            </p>
-            <p className="text-sm" style={{ color: theme.mutedInk, maxWidth: '58ch' }}>
-              Map any decision across five branching futures · Active art direction: {theme.code} (
-              {theme.name}). Diagram plates generated from the Bayesian and Bellman engine (CC0 /
-              Public Domain).
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => handleSwitchDirection('landscape')}
-              className="px-3.5 py-2 text-sm font-medium"
-              style={{
-                backgroundColor:
-                  direction === 'landscape' ? theme.accent : theme.surface,
-                color: direction === 'landscape' ? theme.accentFg : theme.ink,
-              }}
-            >
-              A. Probability Landscape
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSwitchDirection('instrument')}
-              className="px-3.5 py-2 text-sm font-medium"
-              style={{
-                backgroundColor:
-                  direction === 'instrument' ? theme.accent : theme.surface,
-                color: direction === 'instrument' ? theme.accentFg : theme.ink,
-              }}
-            >
-              B. The Instrument
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSwitchDirection('darkroom')}
-              className="px-3.5 py-2 text-sm font-medium"
-              style={{
-                backgroundColor:
-                  direction === 'darkroom' ? theme.accent : theme.surface,
-                color: direction === 'darkroom' ? theme.accentFg : theme.ink,
-              }}
-            >
-              C. The Dark Room
-            </button>
-          </div>
-        </div>
-      </footer>
+        </section>
+      </div>
     </div>
   );
 }

@@ -38,7 +38,7 @@ function ObservatoryInner() {
   const dirParam = searchParams.get('direction') as ArtDirectionId | null;
 
   const [direction, setDirection] = useState<ArtDirectionId>(
-    dirParam && DIRECTION_THEMES[dirParam] ? dirParam : 'landscape'
+    dirParam && DIRECTION_THEMES[dirParam] ? dirParam : 'sanctuary'
   );
 
   useEffect(() => {
@@ -47,7 +47,7 @@ function ObservatoryInner() {
     }
   }, [dirParam]);
 
-  const theme = DIRECTION_THEMES[direction];
+  const theme = DIRECTION_THEMES[direction] || DIRECTION_THEMES.sanctuary;
 
   useEffect(() => {
     document.documentElement.style.backgroundColor = theme.ground;
@@ -76,7 +76,7 @@ function ObservatoryInner() {
   const baselineProbsRef = useRef<Record<string, number>>({});
 
   const [activeViewMode, setActiveViewMode] = useState<'3d' | '2d'>('3d');
-  const [isMentorOpen, setIsMentorOpen] = useState(false);
+  const [cameraMode, setCameraMode] = useState<'scroll' | 'focus' | 'overview'>('overview');
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [interventionMove, setInterventionMove] = useState('');
   const [situationInput, setSituationInput] = useState('');
@@ -91,7 +91,11 @@ function ObservatoryInner() {
     });
   };
 
-  // Load Flagship Scenario on mount or when demoParam changes
+  const handleFocusPortal = (id: string) => {
+    selectNode(id);
+    setCameraMode('focus');
+  };
+
   useEffect(() => {
     let scenario = flagshipFounderSaaSPivot;
     if (demoParam === 'solo-ai' || demoParam === 'senior-tech-solo-ai') {
@@ -119,9 +123,9 @@ function ObservatoryInner() {
     selectNode(scenario.initialWave1[0]?.id || scenario.rootNode.id);
     setUserContextTwin(scenario.recommendedTwin);
     setGoldenPath(scenario.expectedGoldenPathIds);
+    setCameraMode('overview');
   }, [demoParam, setNodes, selectNode, setUserContextTwin, setGoldenPath, setSensitivityLevers]);
 
-  // Handle prompt query parameter
   useEffect(() => {
     if (promptParam && promptParam.trim().length > 0) {
       generateInitialWave(promptParam.trim());
@@ -201,6 +205,7 @@ function ObservatoryInner() {
         unexploredMass: 0.2,
       });
       selectNode(waveNodes[0]?.id || rootId);
+      setCameraMode('focus');
 
       const { goldenPathNodeIds: solved } = solveGoldenPath(
         Object.values(nodeMap),
@@ -225,6 +230,7 @@ function ObservatoryInner() {
         unexploredMass: 0.2,
       });
       selectNode(fallback[0]?.id || rootId);
+      setCameraMode('focus');
     } finally {
       setIsLoadingWave(false);
     }
@@ -265,6 +271,10 @@ function ObservatoryInner() {
         unexploredMass: newRemainingMass,
         exploredMass: Number((1 - newRemainingMass).toFixed(4)),
       });
+      if (added[0]) {
+        selectNode(added[0].id);
+        setCameraMode('focus');
+      }
 
       const allNodes = Object.values(useMultiverseStore.getState().nodes);
       const { goldenPathNodeIds: solved } = solveGoldenPath(
@@ -288,6 +298,10 @@ function ObservatoryInner() {
         unexploredMass: newRemainingMass,
         exploredMass: Number((1 - newRemainingMass).toFixed(4)),
       });
+      if (fallback[0]) {
+        selectNode(fallback[0].id);
+        setCameraMode('focus');
+      }
     } finally {
       setIsLoadingWave(false);
     }
@@ -331,6 +345,7 @@ function ObservatoryInner() {
       addNodes(childNodes);
       useMultiverseStore.setState({ activeDepth: nextDepth });
       selectNode(childNodes[0]?.id || targetNode.id);
+      setCameraMode('focus');
 
       const allNodes = Object.values(useMultiverseStore.getState().nodes);
       const activeRoot = rootNodeId || allNodes.find((n) => !n.parentId)?.id;
@@ -464,27 +479,34 @@ function ObservatoryInner() {
             HOROVEX
           </Link>
           <h1 className="text-xl font-semibold" style={{ color: theme.ink }}>
-            {rootNode?.title || 'Decision Observatory'}
+            {rootNode?.title || 'Alabaster Decision Sanctuary'}
           </h1>
           <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
             Depth {activeDepth || 1} · Wave {maxWaveNumber || 1}
           </span>
         </div>
 
-        {/* Direction Switcher + Workspace Actions */}
+        {/* View Switcher (Sanctuary 3D default + Landscape, Instrument, Dark Room, 2D Table) */}
         <div className="flex flex-wrap items-center gap-2">
-          {(['landscape', 'instrument', 'darkroom'] as ArtDirectionId[]).map((dirId) => {
-            const item = DIRECTION_THEMES[dirId];
-            const active = direction === dirId;
+          {(
+            [
+              { id: 'sanctuary', label: 'Sanctuary 3D' },
+              { id: 'landscape', label: 'Landscape 3D' },
+              { id: 'instrument', label: 'Instrument 3D' },
+              { id: 'darkroom', label: 'Dark Room 3D' },
+            ] as { id: ArtDirectionId; label: string }[]
+          ).map((dir) => {
+            const active = activeViewMode === '3d' && direction === dir.id;
             return (
               <button
-                key={dirId}
+                key={dir.id}
                 type="button"
                 onClick={() => {
-                  setDirection(dirId);
+                  setActiveViewMode('3d');
+                  setDirection(dir.id);
                   try {
                     router.replace(
-                      `/observatory?demo=${demoParam || 'saas-pivot'}&direction=${dirId}`,
+                      `/observatory?demo=${demoParam || 'saas-pivot'}&direction=${dir.id}`,
                       { scroll: false }
                     );
                   } catch {
@@ -497,7 +519,7 @@ function ObservatoryInner() {
                   color: active ? theme.accentFg : theme.ink,
                 }}
               >
-                {item.name}
+                {dir.label}
               </button>
             );
           })}
@@ -506,375 +528,389 @@ function ObservatoryInner() {
             type="button"
             onClick={() => setActiveViewMode((prev) => (prev === '3d' ? '2d' : '3d'))}
             className="px-3 py-1.5 text-sm font-medium"
-            style={{ backgroundColor: theme.ground, color: theme.ink }}
+            style={{
+              backgroundColor: activeViewMode === '2d' ? theme.accent : theme.ground,
+              color: activeViewMode === '2d' ? theme.accentFg : theme.ink,
+            }}
           >
             {activeViewMode === '2d' ? '3D View' : '2D Table View'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsMentorOpen((prev) => !prev)}
-            className="px-3.5 py-1.5 text-sm font-semibold"
-            style={{ backgroundColor: theme.accent, color: theme.accentFg }}
-          >
-            Recommended path
           </button>
         </div>
       </header>
 
-      {/* Main Workspace Grid */}
-      <div className="w-full px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left/Center Column (8 cols): Dilemma Input Bar + 3D Stage + Branch Table */}
-        <div className="lg:col-span-8 space-y-5">
-          {/* Dilemma Input Bar */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (situationInput.trim()) {
-                generateInitialWave(situationInput.trim());
-              }
-            }}
-            className="p-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3"
-            style={{ backgroundColor: theme.surface }}
-          >
-            <input
-              type="text"
-              value={situationInput}
-              onChange={(e) => setSituationInput(e.target.value)}
-              placeholder="Enter your high-stakes dilemma (e.g. Pivot to enterprise vs. stay self-serve?)..."
-              className="flex-1 px-3.5 py-2.5 text-sm focus:outline-none"
-              style={{
-                backgroundColor: theme.ground,
-                color: theme.ink,
-              }}
-            />
-            <button
-              type="submit"
-              disabled={isLoadingWave}
-              className="px-4 py-2.5 text-sm font-semibold whitespace-nowrap"
-              style={{
-                backgroundColor: theme.accent,
-                color: theme.accentFg,
-              }}
+      {/* Main Spatial Sanctuary Workspace */}
+      <div className="w-full px-6 py-4 space-y-5">
+        {/* DOMINANT FULL-WIDTH 3D ALABASTER SANCTUARY HERO STAGE */}
+        {activeViewMode === '3d' && (
+          <div className="w-full" style={{ backgroundColor: theme.surface }}>
+            {/* Stage Camera Header Bar */}
+            <div
+              className="px-4 py-2.5 flex flex-wrap items-center justify-between gap-3"
+              style={{ backgroundColor: theme.surfaceAlt }}
             >
-              {isLoadingWave ? 'Simulating…' : 'Simulate'}
-            </button>
-          </form>
-
-          {/* 3D WebGL Viewport */}
-          {activeViewMode === '3d' ? (
-            <div className="w-full" style={{ backgroundColor: theme.surface }}>
-              <div className="w-full h-[380px] sm:h-[430px] relative">
-                <DirectionCanvas
-                  direction={direction}
-                  nodes={nodeList}
-                  selectedNodeId={selectedNode?.id || null}
-                  goldenPathIds={goldenPathNodeIds}
-                  onSelectNode={(id) => selectNode(id)}
-                  className="w-full h-full"
-                />
-              </div>
-
-              {/* Action Controls Bar below 3D Stage */}
-              <div
-                className="p-4 flex flex-wrap items-center justify-between gap-3"
-                style={{ backgroundColor: theme.surfaceAlt }}
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleHorizontalExpand}
-                    disabled={isLoadingWave}
-                    className="px-3.5 py-2 text-sm font-semibold"
-                    style={{ backgroundColor: theme.accent, color: theme.accentFg }}
-                  >
-                    +5 more futures
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleVerticalRecursion()}
-                    disabled={isLoadingWave || !selectedNodeId}
-                    className="px-3.5 py-2 text-sm font-medium"
-                    style={{ backgroundColor: theme.ground, color: theme.ink }}
-                  >
-                    Show what happens next
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsActionModalOpen((prev) => !prev)}
-                    className="px-3.5 py-2 text-sm font-medium"
-                    style={{ backgroundColor: theme.ground, color: theme.ink }}
-                  >
-                    What if I…
-                  </button>
-                </div>
-
-                <span className="text-sm tabular-nums" style={{ color: theme.ink }}>
-                  Explored mass: {Math.round((1 - unexploredMass) * 100)}% · Reserve:{' '}
-                  {Math.round(unexploredMass * 100)}%
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-semibold" style={{ color: theme.ink }}>
+                  Fly camera to portal:
                 </span>
+                {branchNodes.slice(0, 6).map((node) => {
+                  const isRec =
+                    goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
+                  const isSel = selectedNode?.id === node.id && cameraMode === 'focus';
+                  return (
+                    <button
+                      key={node.id}
+                      type="button"
+                      onClick={() => handleFocusPortal(node.id)}
+                      className="px-2.5 py-1 text-sm font-medium tabular-nums"
+                      style={{
+                        backgroundColor: isRec
+                          ? theme.accent
+                          : isSel
+                          ? theme.ink
+                          : theme.ground,
+                        color: isRec
+                          ? theme.accentFg
+                          : isSel
+                          ? theme.ground
+                          : theme.ink,
+                      }}
+                    >
+                      {Math.round(node.conditionalProbability * 100)}% ·{' '}
+                      {node.title.length > 22 ? `${node.title.slice(0, 20)}…` : node.title}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
-          ) : null}
 
-          {/* Action Injection Inline Panel */}
-          {isActionModalOpen && (
-            <div className="p-4 space-y-3" style={{ backgroundColor: theme.surface }}>
-              <p className="text-base font-semibold" style={{ color: theme.ink }}>
-                Condition next wave on a specific move
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <input
-                  type="text"
-                  value={interventionMove}
-                  onChange={(e) => setInterventionMove(e.target.value)}
-                  placeholder="Describe your move (e.g. require 50% upfront payment)..."
-                  className="flex-1 px-3.5 py-2.5 text-sm"
-                  style={{ backgroundColor: theme.ground, color: theme.ink }}
-                />
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => handleVerticalRecursion(interventionMove)}
-                  className="px-4 py-2.5 text-sm font-semibold"
-                  style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                  onClick={() => setCameraMode('overview')}
+                  className="px-3 py-1 text-sm font-medium"
+                  style={{ backgroundColor: theme.ground, color: theme.ink }}
                 >
-                  Branch with this move
+                  Reset camera / Full garden
                 </button>
               </div>
             </div>
-          )}
 
-          {/* Synchronized Branch Probability Table */}
-          <div className="p-4 space-y-3" style={{ backgroundColor: theme.surface }}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                Branch probability table
-              </h2>
-              <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
-                {branchNodes.length} branches
-              </span>
+            {/* Full-Width 3D WebGL Sanctuary Stage */}
+            <div className="w-full h-[460px] sm:h-[520px] relative">
+              <DirectionCanvas
+                direction={direction}
+                nodes={nodeList}
+                selectedNodeId={selectedNode?.id || null}
+                goldenPathIds={goldenPathNodeIds}
+                onSelectNode={handleFocusPortal}
+                cameraMode={cameraMode}
+                className="w-full h-full"
+              />
             </div>
 
-            <div className="overflow-x-auto" style={{ backgroundColor: theme.ground }}>
-              <table className="w-full text-left border-collapse tabular-nums">
-                <thead>
-                  <tr style={{ backgroundColor: theme.surfaceAlt }}>
-                    <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
-                      Branch
-                    </th>
-                    <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
-                      Horizon
-                    </th>
-                    <th
-                      className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                      style={{ color: theme.ink }}
-                    >
-                      Reversibility
-                    </th>
-                    <th
-                      className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                      style={{ color: theme.ink }}
-                    >
-                      Cumulative
-                    </th>
-                    <th
-                      className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                      style={{ color: theme.ink }}
-                    >
-                      Likelihood
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {branchNodes.map((node) => {
-                    const isRec =
-                      goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
-                    const isSel = selectedNode?.id === node.id;
-                    return (
-                      <tr
-                        key={node.id}
-                        onClick={() => selectNode(node.id)}
-                        className="cursor-pointer"
-                        style={{
-                          backgroundColor: isSel ? theme.surfaceAlt : theme.ground,
-                        }}
-                      >
-                        <td className="py-2.5 px-3.5 text-sm font-medium" style={{ color: theme.ink }}>
-                          {node.title}
-                          {isRec ? ' (Recommended)' : ''}
-                        </td>
-                        <td className="py-2.5 px-3.5 text-sm" style={{ color: theme.mutedInk }}>
-                          {node.timeHorizon}
-                        </td>
-                        <td
-                          className="py-2.5 px-3.5 text-sm text-right tabular-nums"
-                          style={{ color: theme.ink }}
-                        >
-                          {node.reversibilityScore.toFixed(1)}
-                        </td>
-                        <td
-                          className="py-2.5 px-3.5 text-sm text-right tabular-nums"
-                          style={{ color: theme.ink }}
-                        >
-                          {(node.cumulativeProbability * 100).toFixed(1)}%
-                        </td>
-                        <td
-                          className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                          style={{ color: isRec ? theme.accent : theme.ink }}
-                        >
-                          {(node.conditionalProbability * 100).toFixed(1)}%
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column (4 cols): Focused Node Inspector, Sensitivity Levers, and Recommended Path */}
-        <div className="lg:col-span-4 space-y-5">
-          {/* Focused Branch Inspector */}
-          {selectedNode && (
-            <div className="p-5 space-y-3" style={{ backgroundColor: theme.surface }}>
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                  {selectedNode.title}
-                </h2>
-                <span
-                  className="text-base font-semibold tabular-nums"
-                  style={{ color: theme.accent }}
-                >
-                  {(selectedNode.conditionalProbability * 100).toFixed(1)}%
-                </span>
-              </div>
-
-              <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
-                {selectedNode.narrativeSummary ||
-                  'Selected trajectory branch in the decision tree.'}
-              </p>
-
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <div className="p-3" style={{ backgroundColor: theme.ground }}>
-                  <span className="block text-sm" style={{ color: theme.mutedInk }}>
-                    Cumulative odds
-                  </span>
-                  <span
-                    className="text-base font-semibold tabular-nums"
-                    style={{ color: theme.ink }}
-                  >
-                    {(selectedNode.cumulativeProbability * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div className="p-3" style={{ backgroundColor: theme.ground }}>
-                  <span className="block text-sm" style={{ color: theme.mutedInk }}>
-                    Reversibility
-                  </span>
-                  <span
-                    className="text-base font-semibold tabular-nums"
-                    style={{ color: theme.ink }}
-                  >
-                    {selectedNode.reversibilityScore.toFixed(1)} / 10
-                  </span>
-                </div>
-              </div>
-
-              <div className="pt-1 flex flex-wrap gap-2">
+            {/* Stage Action & Dilemma Bar */}
+            <div
+              className="p-3.5 flex flex-wrap items-center justify-between gap-3"
+              style={{ backgroundColor: theme.surfaceAlt }}
+            >
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => collapseWavefunction(selectedNode.id)}
+                  onClick={handleHorizontalExpand}
+                  disabled={isLoadingWave}
                   className="px-3.5 py-2 text-sm font-semibold"
                   style={{ backgroundColor: theme.accent, color: theme.accentFg }}
                 >
-                  Mark what actually happened
+                  +5 more futures
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleVerticalRecursion()}
+                  disabled={isLoadingWave || !selectedNodeId}
+                  className="px-3.5 py-2 text-sm font-medium"
+                  style={{ backgroundColor: theme.ground, color: theme.ink }}
+                >
+                  Show what happens next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsActionModalOpen((prev) => !prev)}
+                  className="px-3.5 py-2 text-sm font-medium"
+                  style={{ backgroundColor: theme.ground, color: theme.ink }}
+                >
+                  What if I…
                 </button>
               </div>
-            </div>
-          )}
 
-          {/* Sensitivity Levers */}
-          <div className="p-5 space-y-4" style={{ backgroundColor: theme.surface }}>
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                Sensitivity levers
-              </h2>
-              <button
-                type="button"
-                onClick={() => applyLeverVector(ZERO_LEVERS)}
-                className="px-2.5 py-1 text-sm font-medium"
-                style={{ backgroundColor: theme.ground, color: theme.ink }}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (situationInput.trim()) {
+                    generateInitialWave(situationInput.trim());
+                  }
+                }}
+                className="flex flex-1 max-w-md items-center gap-2"
               >
-                Reset
-              </button>
-            </div>
-            <div className="space-y-3">
-              {[
-                {
-                  key: 'executionVelocity' as keyof SliderDeltas,
-                  label: 'Shipping speed',
-                },
-                {
-                  key: 'capitalBuffer' as keyof SliderDeltas,
-                  label: 'Cash runway buffer',
-                },
-                {
-                  key: 'marketTailwind' as keyof SliderDeltas,
-                  label: 'Demand tailwind',
-                },
-                {
-                  key: 'skillPreparation' as keyof SliderDeltas,
-                  label: 'Team readiness',
-                },
-              ].map((lever) => {
-                const val = sensitivityLevers[lever.key];
-                const pct = Math.round(val * 100);
-                return (
-                  <div key={lever.key} className="space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <label htmlFor={`obs-${lever.key}`} style={{ color: theme.ink }}>
-                        {lever.label}
-                      </label>
-                      <span className="font-semibold tabular-nums" style={{ color: theme.ink }}>
-                        {pct > 0 ? `+${pct}%` : `${pct}%`}
-                      </span>
-                    </div>
-                    <input
-                      id={`obs-${lever.key}`}
-                      type="range"
-                      min="-1"
-                      max="1"
-                      step="0.05"
-                      value={val}
-                      onChange={(e) =>
-                        handleLeverChange(lever.key, parseFloat(e.target.value))
-                      }
-                      className="w-full h-2 cursor-pointer"
-                      style={{ accentColor: theme.accent }}
-                    />
-                  </div>
-                );
-              })}
+                <input
+                  type="text"
+                  value={situationInput}
+                  onChange={(e) => setSituationInput(e.target.value)}
+                  placeholder="Simulate another high-stakes dilemma..."
+                  className="flex-1 px-3 py-1.5 text-sm focus:outline-none"
+                  style={{ backgroundColor: theme.ground, color: theme.ink }}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoadingWave}
+                  className="px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap"
+                  style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                >
+                  {isLoadingWave ? 'Simulating…' : 'Simulate'}
+                </button>
+              </form>
+
+              <span className="text-sm tabular-nums" style={{ color: theme.ink }}>
+                Explored: {Math.round((1 - unexploredMass) * 100)}% · Reserve:{' '}
+                {Math.round(unexploredMass * 100)}%
+              </span>
             </div>
           </div>
+        )}
 
-          {/* Recommended Path & Fourteen-Day Reasons Panel */}
-          {(isMentorOpen || recommendedNode) && (
-            <div className="p-5 space-y-3" style={{ backgroundColor: theme.surface }}>
-              <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                Recommended path reasons
-              </h2>
-              <p className="text-sm font-semibold" style={{ color: theme.ink }}>
-                Recommended path: {recommendedNode?.title}
-              </p>
-              <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
-                Prioritize {recommendedNode?.title || 'the primary branch'} at{' '}
-                {Math.round((recommendedNode?.conditionalProbability || 0.32) * 100)}% likelihood.
-                Lock annual prepay terms in the first week and monitor checkpoint:{' '}
-                {recommendedNode?.tripwires?.[0] || 'Signed pilot within 45 days'}.
-              </p>
+        {/* Action Injection Inline Panel */}
+        {isActionModalOpen && (
+          <div className="p-4 space-y-3" style={{ backgroundColor: theme.surface }}>
+            <p className="text-base font-semibold" style={{ color: theme.ink }}>
+              Condition next wave on a specific move
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <input
+                type="text"
+                value={interventionMove}
+                onChange={(e) => setInterventionMove(e.target.value)}
+                placeholder="Describe your move (e.g. require 50% upfront payment)..."
+                className="flex-1 px-3.5 py-2 text-sm"
+                style={{ backgroundColor: theme.ground, color: theme.ink }}
+              />
+              <button
+                type="button"
+                onClick={() => handleVerticalRecursion(interventionMove)}
+                className="px-4 py-2 text-sm font-semibold"
+                style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+              >
+                Branch with this move
+              </button>
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Synchronized Strategic Mentor, Sensitivity Levers, and Branch Probability Workbench */}
+        <div className="w-full p-5 space-y-5" style={{ backgroundColor: theme.surface }}>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Left Column (7 cols): Branch Probability Table & Recommended Path */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
+                  Branch probability table
+                </h2>
+                <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
+                  {branchNodes.length} branches · Click any row to fly camera
+                </span>
+              </div>
+
+              <div className="overflow-x-auto" style={{ backgroundColor: theme.ground }}>
+                <table className="w-full text-left border-collapse tabular-nums">
+                  <thead>
+                    <tr style={{ backgroundColor: theme.surfaceAlt }}>
+                      <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
+                        Branch
+                      </th>
+                      <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
+                        Horizon
+                      </th>
+                      <th
+                        className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
+                        style={{ color: theme.ink }}
+                      >
+                        Reversibility
+                      </th>
+                      <th
+                        className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
+                        style={{ color: theme.ink }}
+                      >
+                        Cumulative
+                      </th>
+                      <th
+                        className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
+                        style={{ color: theme.ink }}
+                      >
+                        Likelihood
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {branchNodes.map((node) => {
+                      const isRec =
+                        goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
+                      const isSel = selectedNode?.id === node.id;
+                      return (
+                        <tr
+                          key={node.id}
+                          onClick={() => handleFocusPortal(node.id)}
+                          className="cursor-pointer"
+                          style={{
+                            backgroundColor: isSel ? theme.surfaceAlt : theme.ground,
+                          }}
+                        >
+                          <td className="py-2.5 px-3.5 text-sm font-medium" style={{ color: theme.ink }}>
+                            {node.title}
+                            {isRec ? ' (Recommended)' : ''}
+                          </td>
+                          <td className="py-2.5 px-3.5 text-sm" style={{ color: theme.mutedInk }}>
+                            {node.timeHorizon}
+                          </td>
+                          <td
+                            className="py-2.5 px-3.5 text-sm text-right tabular-nums"
+                            style={{ color: theme.ink }}
+                          >
+                            {node.reversibilityScore.toFixed(1)}
+                          </td>
+                          <td
+                            className="py-2.5 px-3.5 text-sm text-right tabular-nums"
+                            style={{ color: theme.ink }}
+                          >
+                            {(node.cumulativeProbability * 100).toFixed(1)}%
+                          </td>
+                          <td
+                            className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
+                            style={{ color: isRec ? theme.accent : theme.ink }}
+                          >
+                            {(node.conditionalProbability * 100).toFixed(1)}%
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {recommendedNode && (
+                <div className="p-4 space-y-1.5" style={{ backgroundColor: theme.ground }}>
+                  <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
+                    Recommended path: {recommendedNode.title}
+                  </h2>
+                  <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
+                    Prioritize {recommendedNode.title} at{' '}
+                    {Math.round(recommendedNode.conditionalProbability * 100)}% likelihood. Lock
+                    annual prepay terms in the first week and monitor checkpoint:{' '}
+                    {recommendedNode.tripwires?.[0] || 'Signed pilot within 45 days'}.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column (5 cols): Focused Portal Inspector & Sensitivity Levers */}
+            <div className="lg:col-span-5 space-y-4">
+              {selectedNode && (
+                <div className="p-4 space-y-2.5" style={{ backgroundColor: theme.ground }}>
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
+                      {selectedNode.title}
+                    </h2>
+                    <span
+                      className="text-base font-semibold tabular-nums"
+                      style={{ color: theme.accent }}
+                    >
+                      {(selectedNode.conditionalProbability * 100).toFixed(1)}%
+                    </span>
+                  </div>
+
+                  <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
+                    {selectedNode.narrativeSummary ||
+                      'Selected trajectory portal in the sanctuary.'}
+                  </p>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
+                      Cumulative: {(selectedNode.cumulativeProbability * 100).toFixed(1)}% ·
+                      Reversibility: {selectedNode.reversibilityScore.toFixed(1)}/10
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => collapseWavefunction(selectedNode.id)}
+                      className="px-3 py-1.5 text-sm font-semibold"
+                      style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+                    >
+                      Mark what actually happened
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4 space-y-3" style={{ backgroundColor: theme.ground }}>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
+                    Sensitivity levers
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => applyLeverVector(ZERO_LEVERS)}
+                    className="px-2.5 py-1 text-sm font-medium"
+                    style={{ backgroundColor: theme.surface, color: theme.ink }}
+                  >
+                    Reset
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {[
+                    {
+                      key: 'executionVelocity' as keyof SliderDeltas,
+                      label: 'Shipping speed',
+                    },
+                    {
+                      key: 'capitalBuffer' as keyof SliderDeltas,
+                      label: 'Cash runway buffer',
+                    },
+                    {
+                      key: 'marketTailwind' as keyof SliderDeltas,
+                      label: 'Demand tailwind',
+                    },
+                    {
+                      key: 'skillPreparation' as keyof SliderDeltas,
+                      label: 'Team readiness',
+                    },
+                  ].map((lever) => {
+                    const val = sensitivityLevers[lever.key];
+                    const pct = Math.round(val * 100);
+                    return (
+                      <div key={lever.key} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <label htmlFor={`obs-${lever.key}`} style={{ color: theme.ink }}>
+                            {lever.label}
+                          </label>
+                          <span className="font-semibold tabular-nums" style={{ color: theme.ink }}>
+                            {pct > 0 ? `+${pct}%` : `${pct}%`}
+                          </span>
+                        </div>
+                        <input
+                          id={`obs-${lever.key}`}
+                          type="range"
+                          min="-1"
+                          max="1"
+                          step="0.05"
+                          value={val}
+                          onChange={(e) =>
+                            handleLeverChange(lever.key, parseFloat(e.target.value))
+                          }
+                          className="w-full h-2 cursor-pointer"
+                          style={{ accentColor: theme.accent }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -885,8 +921,8 @@ export default function ObservatoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F1F0EC] text-[#141413] text-base">
-          Loading HOROVEX Observatory…
+        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F1F0EC] text-[#161615] text-base">
+          Loading HOROVEX Sanctuary…
         </div>
       }
     >

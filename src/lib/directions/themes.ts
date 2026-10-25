@@ -1,4 +1,4 @@
-export type ArtDirectionId = 'landscape' | 'instrument' | 'darkroom';
+export type ArtDirectionId = 'sanctuary' | 'landscape' | 'instrument' | 'darkroom';
 
 export interface DirectionTheme {
   id: ArtDirectionId;
@@ -26,6 +26,55 @@ export interface DirectionTheme {
 }
 
 export const DIRECTION_THEMES: Record<ArtDirectionId, DirectionTheme> = {
+  sanctuary: {
+    id: 'sanctuary',
+    code: 'Signature Sanctuary',
+    name: 'Alabaster Sanctuary',
+    subtitle: 'Alabaster & mist sculpture garden',
+    headline: 'Walk the shape of your next decision.',
+    lead: 'Your dilemma unfolds across a sunlit alabaster and travertine sanctuary. Five branching futures rise from a mirror-smooth water basin as twin-blade stone portals, with a skylight shaft illuminating the recommended path.',
+    ctaLabel: 'Carve this decision',
+    ground: '#F1F0EC',
+    surface: '#E6E4DE',
+    surfaceAlt: '#DCD9D0',
+    ink: '#161615',
+    mutedInk: '#3E3C38',
+    accent: '#1E4D6B',
+    accentFg: '#FFFFFF',
+    displayFontClass: 'font-serif',
+    ideaSentence:
+      'In the Alabaster Sanctuary, branching futures rise from a reflective water basin as cantilevered twin-blade stone portals scaled by likelihood, while a glacial mineral stream and overhead skylight mark the recommended path.',
+    plates: [
+      {
+        src: '/assets/alabaster-sanctuary.png',
+        alt: 'Five cantilevered alabaster twin-blade portals rising from a reflective water basin under an angled skylight shaft',
+        title: 'Sanctuary portal amphitheater',
+        caption:
+          'Five baseline trajectories rise from the reflective basin as twin-blade stone gates with suspended mineral spheres scaled by likelihood.',
+      },
+      {
+        src: '/assets/alabaster-watershed.png',
+        alt: 'Carved stepped travertine topography showing five branching water channels with one deep glacial blue stream',
+        title: 'Travertine watershed channels',
+        caption:
+          'From the origin pass, five carved stone channels carry water into the basin. The recommended trajectory flows along the glacial mineral aqueduct.',
+      },
+      {
+        src: '/assets/alabaster-monolith.png',
+        alt: 'Close architectural study of the recommended twin-blade portal with a champagne bronze lintel and concentric water ripples',
+        title: 'Twin-blade portal and bronze lintel',
+        caption:
+          'Each future is an architectural gate rather than a primitive block: two tapered alabaster blades bridged by a cantilevered lintel and levitating sphere.',
+      },
+      {
+        src: '/assets/alabaster-horizon.png',
+        alt: 'Second-order downstream sanctuary portals rising out of drifting morning mist behind the foreground gates',
+        title: 'Downstream canyon recursion',
+        caption:
+          'Stepping into any future raises five downstream stone portals out of the mist and glides the camera deeper into the valley.',
+      },
+    ],
+  },
   landscape: {
     id: 'landscape',
     code: 'Direction A',
@@ -46,28 +95,28 @@ export const DIRECTION_THEMES: Record<ArtDirectionId, DirectionTheme> = {
       'In Probability Landscape, the Bayesian tree becomes a sculpted Waddington watershed where valley depth encodes likelihood and the recommended path is the single cobalt river line.',
     plates: [
       {
-        src: '/assets/landscape-watershed.png',
-        alt: 'Topographical contour map showing five branching valleys from a central ridge with one cobalt river line',
+        src: '/assets/alabaster-watershed.png',
+        alt: 'Topographical contour map showing five branching valleys from a central ridge with one mineral river line',
         title: 'Watershed bifurcation',
         caption:
           'From the present pass at top center, five baseline futures carve distinct valleys. The 32% enterprise pivot cuts the widest trough.',
       },
       {
-        src: '/assets/landscape-profile.png',
-        alt: 'Cross-section elevation profile of five probability valleys showing depth proportional to likelihood',
+        src: '/assets/alabaster-sanctuary.png',
+        alt: 'Five architectural portals rising across a sculpted valley basin proportional to likelihood',
         title: 'Valley cross-section',
         caption:
-          'Probability is encoded once as valley depth. Water naturally collects in the deepest channel unless a contrarian force reshapes the slope.',
+          'Probability is encoded once as valley depth and portal mass. Water naturally collects in the deepest channel unless a contrarian force reshapes the slope.',
       },
       {
-        src: '/assets/landscape-canyon.png',
+        src: '/assets/alabaster-horizon.png',
         alt: 'Second-order topographical contours showing a valley splitting into five deeper canyons',
         title: 'Stepping into a future',
         caption:
           'Selecting any valley and projecting forward carves five second-order canyons downslope while conserving cumulative path mass.',
       },
       {
-        src: '/assets/landscape-basin.png',
+        src: '/assets/alabaster-monolith.png',
         alt: 'Hydrological contour basin showing contrarian and tail-risk side channels',
         title: 'Unexplored side channels',
         caption:

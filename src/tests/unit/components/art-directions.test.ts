@@ -6,13 +6,14 @@ import { computeWaveMass } from '@/lib/math/bayesian';
 import { perturbProbabilities, SliderDeltas } from '@/lib/math/sensitivity';
 import { generateDeterministicWave } from '@/lib/ai/adapter';
 
-describe('HOROVEX 3 Art Direction Demos: Themes & Live Engine Integration', () => {
-  it('defines all 3 art directions (landscape, instrument, darkroom) with valid palettes and 4 raster plates each', () => {
+describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & Live Engine Integration', () => {
+  it('defines signature sanctuary and all 3 secondary art directions (sanctuary, landscape, instrument, darkroom) with valid palettes and 4 raster plates each', () => {
+    expect(DIRECTION_THEMES.sanctuary).toBeDefined();
     expect(DIRECTION_THEMES.landscape).toBeDefined();
     expect(DIRECTION_THEMES.instrument).toBeDefined();
     expect(DIRECTION_THEMES.darkroom).toBeDefined();
 
-    for (const key of ['landscape', 'instrument', 'darkroom'] as const) {
+    for (const key of ['sanctuary', 'landscape', 'instrument', 'darkroom'] as const) {
       const theme = DIRECTION_THEMES[key];
       expect(theme.ground).toMatch(/^#[0-9A-Fa-f]{6}$/);
       expect(theme.surface).toMatch(/^#[0-9A-Fa-f]{6}$/);
@@ -25,9 +26,16 @@ describe('HOROVEX 3 Art Direction Demos: Themes & Live Engine Integration', () =
         expect(plate.caption.length).toBeGreaterThan(20);
       }
     }
+
+    expect(DIRECTION_THEMES.sanctuary.plates.map((p) => p.src)).toEqual([
+      '/assets/alabaster-sanctuary.png',
+      '/assets/alabaster-watershed.png',
+      '/assets/alabaster-monolith.png',
+      '/assets/alabaster-horizon.png',
+    ]);
   });
 
-  it('connects flagship scenarios to the Bellman solver and 60 FPS sensitivity perturbation used by all 3 demos', () => {
+  it('connects flagship scenarios to the Bellman solver and 60 FPS sensitivity perturbation used by the sanctuary', () => {
     const scenario = flagshipFounderSaaSPivot;
     const allNodes = [scenario.rootNode, ...scenario.initialWave1];
 

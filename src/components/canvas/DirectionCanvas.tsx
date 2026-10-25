@@ -3,11 +3,12 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ProbabilityNode } from '@/lib/types/multiverse';
+import AlabasterSanctuary3D from './directions/AlabasterSanctuary3D';
 import ProbabilityLandscape3D from './directions/ProbabilityLandscape3D';
 import HorologyInstrument3D from './directions/HorologyInstrument3D';
 import DarkRoomExhibit3D from './directions/DarkRoomExhibit3D';
 
-export type ArtDirectionId = 'landscape' | 'instrument' | 'darkroom';
+export type ArtDirectionId = 'sanctuary' | 'landscape' | 'instrument' | 'darkroom';
 
 export interface DirectionCanvasProps {
   direction: ArtDirectionId;
@@ -16,10 +17,13 @@ export interface DirectionCanvasProps {
   goldenPathIds: string[];
   onSelectNode: (id: string) => void;
   className?: string;
+  scrollProgress?: number;
+  cameraMode?: 'scroll' | 'focus' | 'overview';
 }
 
 const DIRECTION_BG: Record<ArtDirectionId, string> = {
-  landscape: '#E6E2D8',
+  sanctuary: '#ECEBE6',
+  landscape: '#ECEBE6',
   instrument: '#EAEAE4',
   darkroom: '#0E1013',
 };
@@ -31,6 +35,8 @@ export default function DirectionCanvas({
   goldenPathIds,
   onSelectNode,
   className = 'w-full h-full relative',
+  scrollProgress = 0,
+  cameraMode = 'scroll',
 }: DirectionCanvasProps) {
   const [mounted, setMounted] = useState(false);
   const [webglSupported, setWebglSupported] = useState(true);
@@ -58,7 +64,7 @@ export default function DirectionCanvas({
     }
   }, []);
 
-  const bgHex = DIRECTION_BG[direction];
+  const bgHex = DIRECTION_BG[direction] || '#ECEBE6';
 
   if (!mounted || !webglSupported) {
     return (
@@ -74,7 +80,7 @@ export default function DirectionCanvas({
     <div className={className} style={{ backgroundColor: bgHex }}>
       <Canvas
         dpr={[1, 2]}
-        shadows={direction === 'darkroom'}
+        shadows={direction === 'sanctuary' || direction === 'darkroom'}
         gl={{
           antialias: true,
           alpha: false,
@@ -83,7 +89,9 @@ export default function DirectionCanvas({
         }}
         camera={{
           position:
-            direction === 'landscape'
+            direction === 'sanctuary'
+              ? [0, 5.2, 12.5]
+              : direction === 'landscape'
               ? [0, 15.2, 16.0]
               : direction === 'instrument'
               ? [0, 0, 15.2]
@@ -101,6 +109,17 @@ export default function DirectionCanvas({
         }}
       >
         <Suspense fallback={null}>
+          {direction === 'sanctuary' && (
+            <AlabasterSanctuary3D
+              nodes={nodes}
+              selectedNodeId={selectedNodeId}
+              goldenPathIds={goldenPathIds}
+              onSelectNode={onSelectNode}
+              reducedMotion={reducedMotion}
+              scrollProgress={scrollProgress}
+              cameraMode={cameraMode}
+            />
+          )}
           {direction === 'landscape' && (
             <ProbabilityLandscape3D
               nodes={nodes}
