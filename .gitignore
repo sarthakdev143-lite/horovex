@@ -67,4 +67,7 @@ Desktop.ini
 *.temp
 
 # Agent Workspace & Metadata
-.agents/
+# Track project skills (.agents/skills/), ignore agent run logs and handoffs.
+.agents/*
+!.agents/skills/
+.taste-skill/
