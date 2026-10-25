@@ -1,0 +1,52 @@
+# ============================================================================
+# KAIROS — Git Attributes Configuration
+# ============================================================================
+
+# Auto detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Source Code & Documentation
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.mdx text eol=lf
+*.sql text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Custom GLSL Shaders (Three.js / React Three Fiber)
+*.glsl text eol=lf
+*.vert text eol=lf
+*.frag text eol=lf
+
+# Windows Scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 3D Assets, Textures, Fonts & Binary Media
+*.glb binary
+*.gltf text eol=lf
+*.bin binary
+*.hdr binary
+*.exr binary
+*.ktx2 binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
