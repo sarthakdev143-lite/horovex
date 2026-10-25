@@ -1,6 +1,6 @@
-# KAIROS — Architecture & Product Documentation Hub
+# HOROVEX — Architecture & Product Documentation Hub
 
-Welcome to the engineering and product specification suite for **KAIROS: The AI Multiverse Decision & Probability Simulator**.
+Welcome to the engineering and product specification suite for **HOROVEX: The AI Multiverse Decision & Probability Simulator**.
 
 ---
 
@@ -43,4 +43,4 @@ Welcome to the engineering and product specification suite for **KAIROS: The AI 
 4. **User Intervention Mode on Recursive Nodes**:
    - Every node supports both **Passive Auto-Projection** (*"Show me the next 5 most probable outcomes"*) and **Active Action Injection** (*"Assuming this happens, here is the move I make next"*).
 5. **Product Name & Visual Signature**:
-   - **KAIROS** with the **Obsidian Chronometry** aesthetic (`#050507` Deep Void Obsidian, `#D4AF37` Champagne Gold for the Mentor's Golden Path, and Spectral Cyan/Emerald/Violet probability filaments).
+   - **HOROVEX** with the **Obsidian Chronometry** aesthetic (`#050507` Deep Void Obsidian, `#D4AF37` Champagne Gold for the Mentor's Golden Path, and Spectral Cyan/Emerald/Violet probability filaments).

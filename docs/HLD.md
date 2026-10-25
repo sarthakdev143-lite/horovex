@@ -1,5 +1,5 @@
 # High-Level Design (HLD)
-## Project Codename: **KAIROS** — The AI Multiverse Decision & Probability Simulator
+## Project Codename: **HOROVEX** — The AI Multiverse Decision & Probability Simulator
 
 | Metadata | Details |
 | :--- | :--- |
@@ -12,9 +12,9 @@
 
 ## 1. Architectural Vision & Engineering Principles
 
-KAIROS is not a chat wrapper; it is a **stateful, recursive probabilistic decision engine** paired with a **60 FPS 3D spatial observatory**. The architecture is governed by five core engineering principles:
+HOROVEX is not a chat wrapper; it is a **stateful, recursive probabilistic decision engine** paired with a **60 FPS 3D spatial observatory**. The architecture is governed by five core engineering principles:
 
-1. **Hybrid Neuro-Symbolic Probability Engine**: LLMs excel at divergent causal reasoning and narrative generation, but struggle with raw probability arithmetic across expanding trees. KAIROS decouples **Qualitative Causal Generation (LLM)** from **Quantitative Bayesian Normalization & Expected Utility Math (Deterministic TypeScript Engine)**.
+1. **Hybrid Neuro-Symbolic Probability Engine**: LLMs excel at divergent causal reasoning and narrative generation, but struggle with raw probability arithmetic across expanding trees. HOROVEX decouples **Qualitative Causal Generation (LLM)** from **Quantitative Bayesian Normalization & Expected Utility Math (Deterministic TypeScript Engine)**.
 2. **Progressive Streaming Materialization**: Users must never stare at a blocking spinner for 15 seconds. As the AI generates each of the 5 futures (or `+5 More Possibilities`), individual nodes stream via Server-Sent Events (SSE) / ReadableStreams and physically crystallize into the 3D phase space in real time.
 3. **Zero-Jank 60 FPS Spatial Rendering**: React state updates must never bottleneck the WebGL render loop. The 3D scene operates on transient Zustand references, instanced geometries, custom GLSL shaders, and spring-damped camera physics.
 4. **Infinite Tree Scalability (`ltree` + DAG Storage)**: Because users can expand horizontally (`5 -> 10 -> 15 -> 20+` sibling possibilities) and dive vertically (`T0 -> T1 -> T2 -> ... -> Tn`) indefinitely, the database uses materialized path indexing (`ltree`) alongside adjacency lists for $O(1)$ subtree retrieval and ancestry conditioning.
@@ -76,7 +76,7 @@ flowchart TB
 ## 3. Core Subsystem Architecture
 
 ### 3.1 The Multi-Stage AI Reasoning & Probability Pipeline
-To prevent generic or repetitive outputs when a user clicks **"Simulate +5 More Possibilities"** or dives 5 levels deep into a timeline, KAIROS uses a four-stage orchestration pipeline:
+To prevent generic or repetitive outputs when a user clicks **"Simulate +5 More Possibilities"** or dives 5 levels deep into a timeline, HOROVEX uses a four-stage orchestration pipeline:
 
 #### Stage A: Pre-Simulation Calibration ("The Clarifying Pulse")
 - When a user inputs an initial situation $S_0$, the system retrieves their **Personal Context Digital Twin** from Supabase.
@@ -109,7 +109,7 @@ Rather than picking a branch arbitrarily, the Mentor Engine runs a **Multi-Objec
 
 ### 3.2 The 3D Spatial Observatory Engine ("Anti-Slop" Visual Architecture)
 
-The primary interface of KAIROS is an interactive 3D phase-space canvas built with **React Three Fiber (R3F)**, **Three.js**, **Drei**, and **Custom GLSL Shaders**.
+The primary interface of HOROVEX is an interactive 3D phase-space canvas built with **React Three Fiber (R3F)**, **Three.js**, **Drei**, and **Custom GLSL Shaders**.
 
 ```mermaid
 flowchart LR

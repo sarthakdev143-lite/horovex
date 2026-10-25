@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-## Project Codename: **KAIROS** — The AI Multiverse Decision & Probability Simulator
+## Project Codename: **HOROVEX** — The AI Multiverse Decision & Probability Simulator
 
 | Metadata | Details |
 | :--- | :--- |
@@ -18,19 +18,19 @@ Every high-stakes human decision—whether launching a company, pivoting a caree
 2. **Generic AI chat wrappers** that output shallow, one-dimensional bullet points without understanding the user's constraints, base rates, second-order consequences, or recursive downstream effects.
 
 ### 1.2 The Solution
-**KAIROS** is a **Recursive Multiverse Probability Simulator and Personal Strategic Decision Engine**. 
+**HOROVEX** is a **Recursive Multiverse Probability Simulator and Personal Strategic Decision Engine**. 
 
-When a user inputs a real-world situation or crossroads, KAIROS does not merely reply with text. It constructs an interactive, living **3D Multiverse Probability Tree**:
+When a user inputs a real-world situation or crossroads, HOROVEX does not merely reply with text. It constructs an interactive, living **3D Multiverse Probability Tree**:
 1. **Initial Wave (Top 5 Probabilities)**: The engine analyzes the user's situation alongside their personal context profile and generates the **5 most probable future trajectories**, complete with calibrated probabilities, time horizons, causal drivers, and risk/reward scores.
 2. **Horizontal Expansion ("+5 More Possibilities")**: At any node, the user can trigger deeper exploration to uncover **5 additional possibilities**—progressively expanding from baseline likely outcomes (1–5) into contrarian/second-order shifts (6–10) and high-impact tail risks or asymmetric opportunities (11–15+).
 3. **Infinite Vertical Recursion**: Every single predicted outcome can become the **new origin point**. A user can select *Possibility #7*, step inside that timeline, and simulate the *next* 5, 10, or 20 recursive future branches across months or years.
-4. **The Personal Mentor & Golden Path Engine**: Acting as a seasoned strategist and personal advisor, KAIROS evaluates the entire multiverse tree to highlight the **Optimal Trajectory ("The Golden Path")**, explaining *why* it is the highest-utility choice, what actions shift the odds in the user's favor, and what early-warning signals ("tripwires") to watch for in real life.
+4. **The Personal Mentor & Golden Path Engine**: Acting as a seasoned strategist and personal advisor, HOROVEX evaluates the entire multiverse tree to highlight the **Optimal Trajectory ("The Golden Path")**, explaining *why* it is the highest-utility choice, what actions shift the odds in the user's favor, and what early-warning signals ("tripwires") to watch for in real life.
 
 ---
 
 ## 2. Anti-Slop Design & Experience Philosophy
 
-> **Core Directive:** KAIROS must feel like an instrument engineered by a bespoke Swiss horology house combined with a quantum astrophysics observatory—never a generic SaaS dashboard.
+> **Core Directive:** HOROVEX must feel like an instrument engineered by a bespoke Swiss horology house combined with a quantum astrophysics observatory—never a generic SaaS dashboard.
 
 ### 2.1 Visual & Spatial Identity
 - **Aesthetic Archetype**: *Obsidian Chronometry & Bioluminescent Phase Space*.
@@ -46,7 +46,7 @@ When a user inputs a real-world situation or crossroads, KAIROS does not merely 
 
 ## 3. Target User Personas
 
-| Persona | Use Case Examples | Why They Pay for KAIROS |
+| Persona | Use Case Examples | Why They Pay for HOROVEX |
 | :--- | :--- | :--- |
 | **1. The Founder / Indie Builder** | Pricing pivots, co-founder splits, fundraising vs. bootstrapping, product positioning, hiring vs. staying lean. | Needs rigorous second- and third-order consequence mapping and pre-mortem risk detection before burning runway. |
 | **2. The High-Agency Professional** | Accepting a competing offer, relocating countries, negotiating equity, switching industries, going full-time solo. | Wants an objective advisor that weighs financial runway, career compounding, and personal fulfillment. |
@@ -58,9 +58,9 @@ When a user inputs a real-world situation or crossroads, KAIROS does not merely 
 ## 4. Core Product Features & Functional Requirements
 
 ### 4.1 Feature Pillar 1: The Personal Context Engine ("Digital Twin")
-A prediction is only as dependable as its context. Before or during a simulation, KAIROS maintains a persistent, evolving **User Context Graph**:
+A prediction is only as dependable as its context. Before or during a simulation, HOROVEX maintains a persistent, evolving **User Context Graph**:
 - **Core Baseline**: Risk tolerance (Conservative / Measured / Aggressive), financial runway / buffer, time horizon priority, primary life/career values (Wealth, Autonomy, Mastery, Stability, Impact, Peace).
-- **Smart Clarifying Pulse (Pre-Simulation Calibration)**: When a user enters a situation (e.g., *"I'm thinking of leaving my senior engineering job to build an AI agency"*), KAIROS optionally asks **2–3 surgical, high-entropy clarifying questions** (or auto-infers from their profile) to anchor the simulation in reality rather than generic assumptions.
+- **Smart Clarifying Pulse (Pre-Simulation Calibration)**: When a user enters a situation (e.g., *"I'm thinking of leaving my senior engineering job to build an AI agency"*), HOROVEX optionally asks **2–3 surgical, high-entropy clarifying questions** (or auto-infers from their profile) to anchor the simulation in reality rather than generic assumptions.
 
 ### 4.2 Feature Pillar 2: The Recursive Multiverse Generator
 - **Initial 5 Probable Futures (Tier 1 — Baseline Regime)**:
@@ -83,7 +83,7 @@ A prediction is only as dependable as its context. Before or during a simulation
     2. **Inject an Action / Intervention**: *"Assuming Possibility #3 happens, what if I respond by partnering with a distributor?"* -> Generates 5 new child futures conditioned on that intervention.
 
 ### 4.3 Feature Pillar 3: The AI Mentor & Decision Intelligence Layer
-KAIROS doesn't leave the user lost in 50 branches. It synthesizes the tree into actionable wisdom:
+HOROVEX doesn't leave the user lost in 50 branches. It synthesizes the tree into actionable wisdom:
 - **The Golden Path (Optimal Trajectory Highlight)**:
   - Visually illuminates the optimal chain of nodes in warm gold across the 3D space.
   - Computes a composite **Decision Score** combining:
@@ -98,7 +98,7 @@ KAIROS doesn't leave the user lost in 50 branches. It synthesizes the tree into 
 
 ### 4.4 Feature Pillar 4: Living Timeline & Reality Check-Ins (Retention Loop)
 - Decisions aren't one-off events. Users save their **Multiverse Canvases**.
-- **Reality Check-In ("Collapse the Wavefunction")**: Users can return weeks later, mark which branch actually occurred in real life, prune unrealized branches, and continue simulating forward from their new reality—turning KAIROS into a lifelong strategic companion.
+- **Reality Check-In ("Collapse the Wavefunction")**: Users can return weeks later, mark which branch actually occurred in real life, prune unrealized branches, and continue simulating forward from their new reality—turning HOROVEX into a lifelong strategic companion.
 
 ---
 

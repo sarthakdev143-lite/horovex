@@ -1,5 +1,5 @@
 # Low-Level Design (LLD)
-## Project Codename: **KAIROS** — The AI Multiverse Decision & Probability Simulator
+## Project Codename: **HOROVEX** — The AI Multiverse Decision & Probability Simulator
 
 | Metadata | Details |
 | :--- | :--- |
@@ -11,7 +11,7 @@
 
 ## 1. Database Schema & SQL DDL (Supabase PostgreSQL)
 
-KAIROS uses PostgreSQL with `ltree` (for infinite recursive tree lineage queries) and `vector` (`pgvector` for semantic deduplication and Digital Twin memory).
+HOROVEX uses PostgreSQL with `ltree` (for infinite recursive tree lineage queries) and `vector` (`pgvector` for semantic deduplication and Digital Twin memory).
 
 ```sql
 -- ============================================================================
@@ -283,7 +283,7 @@ CREATE POLICY "Users manage own reality checkins" ON public.reality_checkins
 ### 2.1 Progressive Probability Partitioning (`5 -> +5 -> +5` Normalization)
 A critical flaw in naive probability apps is that generating 5 outcomes summing to $100\%$ leaves $0\%$ probability mass when the user clicks **"Simulate +5 More Possibilities"**.
 
-KAIROS solves this with **Reserved Unexplored Phase-Space Mass ($M_{\text{unexplored}}^{(w)}$)**:
+HOROVEX solves this with **Reserved Unexplored Phase-Space Mass ($M_{\text{unexplored}}^{(w)}$)**:
 
 1. **Wave 1 (Initial 5 Baseline Nodes, $w = 1$)**:
    - Represents the primary canonical cluster, allocated $\alpha_1 = 0.80$ ($80\%$) of total conditional probability mass, while reserving $M_{\text{unexplored}}^{(1)} = 1 - \alpha_1 = 0.20$ ($20\%$) for future waves:
@@ -434,7 +434,7 @@ export const ProbabilityWaveResponseSchema = z.object({
 export const MentorSynthesisSchema = z.object({
   focalNodeId: z.string().uuid().nullable(),
   goldenPathNodeIds: z.array(z.string().uuid()).min(1),
-  executiveVerdict: z.string().describe("Authoritative strategic recommendation from the KAIROS Mentor"),
+  executiveVerdict: z.string().describe("Authoritative strategic recommendation from the HOROVEX Mentor"),
   whyThisPathWins: z.string().describe("Expected utility, reversibility, and regret-minimization rationale"),
   blindspotsDetected: z.array(z.string()).min(2).max(5),
   preMortemHedgePlan: z.string().describe("Concrete mitigation protocol against tail-risk failure modes"),
@@ -484,7 +484,7 @@ export const WavefunctionCollapseRequestSchema = z.object({
 src/
 ├── app/
 │   ├── layout.tsx                      # Obsidian dark theme root, fonts (Instrument Serif, Plus Jakarta, JetBrains Mono)
-│   ├── page.tsx                        # Main KAIROS Spatial Observatory & Command Nexus
+│   ├── page.tsx                        # Main HOROVEX Spatial Observatory & Command Nexus
 │   ├── (auth)/                         # Supabase Auth routes (Login, Callback)
 │   └── api/
 │       └── simulations/

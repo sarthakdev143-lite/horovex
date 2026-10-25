@@ -1,5 +1,5 @@
 # Product & Engineering Execution Roadmap
-## Project Codename: **KAIROS** — The AI Multiverse Decision & Probability Simulator
+## Project Codename: **HOROVEX** — The AI Multiverse Decision & Probability Simulator
 
 | Metadata | Details |
 | :--- | :--- |

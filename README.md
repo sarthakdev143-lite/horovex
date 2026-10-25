@@ -1,4 +1,4 @@
-# KAIROS — The AI Multiverse Decision & Probability Simulator
+# HOROVEX — The AI Multiverse Decision & Probability Simulator
 
 > **An ultra-luxury 3D spatial decision engine and recursive probability simulator.**
 > Input any high-stakes crossroads, explore calibrated future timelines (`5 -> +5 -> +5` horizontally and infinitely deep vertically), test real-time sensitivity levers, and discover your optimal **Golden Path** guided by an AI Strategic Mentor.
