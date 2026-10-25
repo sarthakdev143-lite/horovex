@@ -50,7 +50,7 @@ flowchart LR
 - [x] **Low-Level Design (`docs/LLD.md`)**: Complete Supabase SQL DDL (`ltree`, `pgvector`, RLS), Bayesian unexplored mass partitioning math, Bellman Golden Path formula, Softmax sensitivity slider math, Zod schemas.
 - [x] **Execution Roadmap (`docs/ROADMAP.md`)**: Phased build plan and quality gates.
 - [x] **Git Workspace Configuration**: `.gitignore`, `.gitattributes`, repository initialization, and documentation index.
-- [ ] **Founder Alignment Gate**: Review clarifying questions on LLM provider preference, auth mode, and initial flagship templates.
+- [x] **Founder Alignment Gate**: Review clarifying questions on LLM provider preference, auth mode, and initial flagship templates.
 
 ---
 

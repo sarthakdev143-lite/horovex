@@ -32,20 +32,15 @@ Welcome to the engineering and product specification suite for **KAIROS: The AI 
 
 ---
 
-## ❓ Open Questions for Founder Alignment (Pre-Build Check)
+## ✅ Locked-In Founder Alignment Decisions
 
-Before we transition from **Phase 0 (Blueprint)** to **Phase 1–5 (Full Application Build)**, please review and share your preferences on the following decisions:
-
-1. **AI Model / Provider Preference**:
-   - Which LLM provider should we wire as the primary engine for the structured probability waves (`OpenAI GPT-4o / o3-mini`, `Google Gemini 2.5 Pro/Flash`, `Anthropic Claude 3.7 Sonnet`, or a unified multi-provider adapter with automatic fallback / demo simulation mode if no API key is set yet)?
+1. **AI Model / Provider Architecture**:
+   - **Multi-provider AI adapter** (`Gemini` / `OpenAI` / `Anthropic`) paired with a **built-in intelligent simulation engine fallback** so the application works out-of-the-box with or without external API keys configured.
 2. **Pre-Simulation Calibration ("The Clarifying Pulse")**:
-   - When a user types a situation, should the app **always ask 2–3 quick multiple-choice clarifying questions** before generating the first 5 futures (with a *"Skip & Simulate Immediately"* button), or should it **generate the first 5 immediately** and let the user refine context on the fly?
-3. **Authentication vs. Instant Zero-Friction Sandbox**:
-   - Should first-time visitors land **directly inside the live 3D Multiverse Observatory** with guest/local persistence (and optional Supabase login to save/sync across devices), or do you want a dedicated luxury 3D landing experience before entering the simulator workspace?
+   - **Adaptive Entropy Gating**: Only prompt with the 3 quick clarifying questions when the user's situation input is short or ambiguous (always with a 1-click *"Skip & Simulate Immediately"* option); when the input is already detailed, launch directly into generating Wave 1 (Initial 5 Probabilities).
+3. **Entry Experience & Authentication Flow**:
+   - **Luxury 3D Hero/Landing Experience** that transitions seamlessly into the live **3D Multiverse Observatory**, supporting both **Instant Guest Sandbox** persistence and **Supabase Auth** to save/sync across devices.
 4. **User Intervention Mode on Recursive Nodes**:
-   - When a user clicks into one of the predicted futures to go deeper (vertical recursion), we designed **two modes**:
-     - *(A) Passive Auto-Projection* ("Show me the next 5 most probable outcomes if this happens")
-     - *(B) Active Action Injection* ("Assuming this happens, here is the move I make next—simulate the 5 consequences of my move").
-     - Confirming you want **both** available on every node?
+   - Every node supports both **Passive Auto-Projection** (*"Show me the next 5 most probable outcomes"*) and **Active Action Injection** (*"Assuming this happens, here is the move I make next"*).
 5. **Product Name & Visual Signature**:
-   - We codenamed the product **KAIROS** with the **Obsidian Chronometry** palette (Deep Void Obsidian `#050507`, Champagne Gold `#D4AF37` for the Mentor's Golden Path, and Spectral Cyan/Emerald for probability filaments). Would you like to keep **KAIROS** and this aesthetic direction, or do you have a specific brand name / color signature in mind?
+   - **KAIROS** with the **Obsidian Chronometry** aesthetic (`#050507` Deep Void Obsidian, `#D4AF37` Champagne Gold for the Mentor's Golden Path, and Spectral Cyan/Emerald/Violet probability filaments).
