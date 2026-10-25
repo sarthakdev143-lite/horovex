@@ -3,142 +3,44 @@
 @tailwind utilities;
 
 :root {
-  --color-obsidian-void: #050507;
-  --color-obsidian-surface: #0D0D14;
-  --color-obsidian-border: rgba(255, 255, 255, 0.07);
-  --color-gold-mentor: #D4AF37;
-  --color-gold-glow: #F3E5AB;
-  --color-spectral-cyan: #00F0FF;
-  --color-spectral-emerald: #10B981;
-  --color-spectral-violet: #8B5CF6;
-  --color-spectral-crimson: #F43F5E;
-  --color-spectral-amber: #F59E0B;
+  --color-obsidian-void: #0E1013;
+  --color-obsidian-surface: #161920;
+  --color-gold-mentor: #E0A838;
 }
 
 @layer base {
-  * {
-    border-color: rgba(255, 255, 255, 0.07);
-  }
-  
   body {
-    background-color: #050507;
-    color: #E2E8F0;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-variant-numeric: tabular-nums;
   }
 }
 
-/* Glassmorphism Primitives */
-.glass-panel {
-  background: rgba(10, 10, 15, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+@keyframes hvSettleIn {
+  0% {
+    opacity: 0.88;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.glass-panel-elevated {
-  background: rgba(13, 13, 20, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 16px 48px -8px rgba(0, 0, 0, 0.8);
+.hv-motion-item {
+  animation: hvSettleIn 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.glass-panel-gold {
-  background: rgba(18, 16, 10, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(212, 175, 55, 0.32);
-  box-shadow: 0 0 25px rgba(212, 175, 55, 0.14);
-}
+.hv-delay-1 { animation-delay: 60ms; }
+.hv-delay-2 { animation-delay: 120ms; }
+.hv-delay-3 { animation-delay: 180ms; }
+.hv-delay-4 { animation-delay: 240ms; }
+.hv-delay-5 { animation-delay: 300ms; }
+.hv-delay-6 { animation-delay: 360ms; }
+.hv-delay-7 { animation-delay: 420ms; }
+.hv-delay-8 { animation-delay: 480ms; }
 
-.glass-card {
-  background: rgba(14, 14, 22, 0.70);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.glass-card:hover {
-  background: rgba(20, 20, 32, 0.80);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-/* Hairline Metallic Borders */
-.hairline-border {
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.hairline-border-t {
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.hairline-border-b {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.hairline-border-gold {
-  border: 1px solid rgba(212, 175, 55, 0.32);
-}
-
-/* Luxury Editorial Text Gradients */
-.text-gold-gradient {
-  background: linear-gradient(135deg, #FDF6D8 0%, #D4AF37 50%, #9B7D1A 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.text-silver-gradient {
-  background: linear-gradient(135deg, #FFFFFF 0%, #CBD5E1 50%, #64748B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.text-cyan-gradient {
-  background: linear-gradient(135deg, #E0FCFF 0%, #00F0FF 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-/* Subtle Text Glows */
-.text-glow-gold {
-  text-shadow: 0 0 12px rgba(212, 175, 55, 0.45);
-}
-
-.text-glow-cyan {
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.45);
-}
-
-.text-glow-crimson {
-  text-shadow: 0 0 12px rgba(244, 63, 94, 0.45);
-}
-
-/* Background Vignette & Ambient Radial Glows */
-.bg-obsidian-vignette {
-  background: 
-    radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 100% 100%, rgba(0, 240, 255, 0.03) 0%, transparent 40%),
-    #050507;
-}
-
-/* Precision Horology Scrollbars */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: #050507;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.45);
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Reduced Motion Mode (WCAG AA Compliance) */
@@ -148,5 +50,10 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .hv-motion-item {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 }

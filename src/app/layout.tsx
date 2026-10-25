@@ -1,59 +1,33 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Newsreader, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
-  weight: "400",
+const newsreader = Newsreader({
   subsets: ["latin"],
-  style: ["normal", "italic"],
-  variable: "--font-instrument-serif",
+  style: ["normal"],
+  variable: "--font-newsreader",
   display: "swap",
 });
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
-  display: "swap",
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-jetbrains-mono",
+  variable: "--font-instrument-sans",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "HOROVEX — Precision Chronometric Decision Engine",
+  title: "HOROVEX · Decision Engine Across Branching Futures",
   description:
-    "Ultra-luxury 3D AI Multiverse Probability Simulator and Strategic Decision Engine. Simulate the 5 most probable futures, expand horizontally to 20+ possibilities, and illuminate the Golden Path.",
-  keywords: [
-    "AI Multiverse",
-    "Decision Engine",
-    "Scenario Planning",
-    "Probabilistic Forecasting",
-    "Bayesian Trees",
-    "Horology",
-    "Strategic Intelligence",
-  ],
-  authors: [{ name: "HOROVEX Chronometry & Decision Labs" }],
-  openGraph: {
-    title: "HOROVEX — Precision Chronometric Decision Engine",
-    description:
-      "Step into the 3D Multiverse Observatory. Model high-stakes crossroads across diverging probability trajectories.",
-    type: "website",
-    siteName: "HOROVEX",
-  },
+    "Map high-stakes decisions across branching probability paths, shift sensitivity levers in real time, and isolate the recommended trajectory.",
   icons: {
     icon: "/favicon.ico",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050507",
-  colorScheme: "dark",
+  themeColor: "#F1F0EC",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -62,9 +36,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark scroll-smooth">
+    <html lang="en" className="scroll-smooth">
       <body
-        className={`${instrumentSerif.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} bg-[#050507] text-[#E2E8F0] font-sans antialiased selection:bg-[#D4AF37]/20 selection:text-[#F3E5AB] min-h-screen overflow-x-hidden`}
+        className={`${newsreader.variable} ${instrumentSans.variable} bg-[#F1F0EC] text-[#141413] font-sans antialiased min-h-[100dvh] overflow-x-hidden tabular-nums`}
       >
         {children}
       </body>
