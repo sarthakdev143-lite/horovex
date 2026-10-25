@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useMultiverseStore } from '@/lib/state/useMultiverseStore';
 import { ProbabilityNode } from '@/lib/types/multiverse';
 import { solveGoldenPath } from '@/lib/math/bellman';
@@ -32,22 +32,11 @@ const ZERO_LEVERS: SliderDeltas = {
 
 function ObservatoryInner() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const demoParam = searchParams.get('demo');
   const promptParam = searchParams.get('prompt');
-  const dirParam = searchParams.get('direction') as ArtDirectionId | null;
 
-  const [direction, setDirection] = useState<ArtDirectionId>(
-    dirParam && DIRECTION_THEMES[dirParam] ? dirParam : 'sanctuary'
-  );
-
-  useEffect(() => {
-    if (dirParam && DIRECTION_THEMES[dirParam]) {
-      setDirection(dirParam);
-    }
-  }, [dirParam]);
-
-  const theme = DIRECTION_THEMES[direction] || DIRECTION_THEMES.sanctuary;
+  const direction: ArtDirectionId = 'sanctuary';
+  const theme = DIRECTION_THEMES.sanctuary;
 
   useEffect(() => {
     document.documentElement.style.backgroundColor = theme.ground;
@@ -472,7 +461,7 @@ function ObservatoryInner() {
       >
         <div className="flex items-center gap-4">
           <Link
-            href={`/?direction=${direction}`}
+            href="/"
             className="text-lg font-semibold"
             style={{ color: theme.ink }}
           >
@@ -486,54 +475,29 @@ function ObservatoryInner() {
           </span>
         </div>
 
-        {/* View Switcher (Sanctuary 3D default + Landscape, Instrument, Dark Room, 2D Table) */}
+        {/* Locked Sanctuary View Switcher: Only 3D Sanctuary & Compare in Table */}
         <div className="flex flex-wrap items-center gap-2">
-          {(
-            [
-              { id: 'sanctuary', label: 'Sanctuary 3D' },
-              { id: 'landscape', label: 'Landscape 3D' },
-              { id: 'instrument', label: 'Instrument 3D' },
-              { id: 'darkroom', label: 'Dark Room 3D' },
-            ] as { id: ArtDirectionId; label: string }[]
-          ).map((dir) => {
-            const active = activeViewMode === '3d' && direction === dir.id;
-            return (
-              <button
-                key={dir.id}
-                type="button"
-                onClick={() => {
-                  setActiveViewMode('3d');
-                  setDirection(dir.id);
-                  try {
-                    router.replace(
-                      `/observatory?demo=${demoParam || 'saas-pivot'}&direction=${dir.id}`,
-                      { scroll: false }
-                    );
-                  } catch {
-                    // ignore router errors in test environments
-                  }
-                }}
-                className="px-3 py-1.5 text-sm font-medium"
-                style={{
-                  backgroundColor: active ? theme.accent : theme.ground,
-                  color: active ? theme.accentFg : theme.ink,
-                }}
-              >
-                {dir.label}
-              </button>
-            );
-          })}
-
           <button
             type="button"
-            onClick={() => setActiveViewMode((prev) => (prev === '3d' ? '2d' : '3d'))}
-            className="px-3 py-1.5 text-sm font-medium"
+            onClick={() => setActiveViewMode('3d')}
+            className="px-3.5 py-1.5 text-sm font-semibold"
+            style={{
+              backgroundColor: activeViewMode === '3d' ? theme.accent : theme.ground,
+              color: activeViewMode === '3d' ? theme.accentFg : theme.ink,
+            }}
+          >
+            3D Sanctuary
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveViewMode('2d')}
+            className="px-3.5 py-1.5 text-sm font-medium"
             style={{
               backgroundColor: activeViewMode === '2d' ? theme.accent : theme.ground,
               color: activeViewMode === '2d' ? theme.accentFg : theme.ink,
             }}
           >
-            {activeViewMode === '2d' ? '3D View' : '2D Table View'}
+            Compare in Table
           </button>
         </div>
       </header>
@@ -550,7 +514,7 @@ function ObservatoryInner() {
             >
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-semibold" style={{ color: theme.ink }}>
-                  Fly camera to portal:
+                  Fly camera to future:
                 </span>
                 {[...branchNodes]
                   .sort((a, b) => {
@@ -598,13 +562,13 @@ function ObservatoryInner() {
                   className="px-3 py-1 text-sm font-medium"
                   style={{ backgroundColor: theme.ground, color: theme.ink }}
                 >
-                  Reset camera / Full garden
+                  Reset Camera
                 </button>
               </div>
             </div>
 
             {/* Full-Width 3D WebGL Sanctuary Stage */}
-            <div className="w-full min-h-[520px] lg:min-h-[620px] h-[520px] lg:h-[620px] relative">
+            <div className="w-full min-h-[540px] lg:min-h-[620px] h-[70dvh] relative overflow-hidden">
               <DirectionCanvas
                 direction={direction}
                 nodes={nodeList}
@@ -629,7 +593,7 @@ function ObservatoryInner() {
                   className="px-3.5 py-2 text-sm font-semibold"
                   style={{ backgroundColor: theme.accent, color: theme.accentFg }}
                 >
-                  +5 more futures
+                  +5 more possibilities
                 </button>
                 <button
                   type="button"
@@ -638,7 +602,7 @@ function ObservatoryInner() {
                   className="px-3.5 py-2 text-sm font-medium"
                   style={{ backgroundColor: theme.ground, color: theme.ink }}
                 >
-                  Show what happens next
+                  See what happens next
                 </button>
                 <button
                   type="button"
@@ -657,13 +621,13 @@ function ObservatoryInner() {
                     generateInitialWave(situationInput.trim());
                   }
                 }}
-                className="flex flex-1 max-w-md items-center gap-2"
+                className="flex flex-col sm:flex-row w-full sm:w-auto flex-1 max-w-md items-stretch sm:items-center gap-2"
               >
                 <input
                   type="text"
                   value={situationInput}
                   onChange={(e) => setSituationInput(e.target.value)}
-                  placeholder="Simulate another high-stakes dilemma..."
+                  placeholder="Simulate another real-life crossroads..."
                   className="flex-1 px-3 py-1.5 text-sm focus:outline-none"
                   style={{ backgroundColor: theme.ground, color: theme.ink }}
                 />
@@ -673,12 +637,12 @@ function ObservatoryInner() {
                   className="px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap"
                   style={{ backgroundColor: theme.accent, color: theme.accentFg }}
                 >
-                  {isLoadingWave ? 'Simulating…' : 'Simulate'}
+                  {isLoadingWave ? 'Simulating…' : 'Predict 5 Futures'}
                 </button>
               </form>
 
               <span className="text-sm tabular-nums" style={{ color: theme.ink }}>
-                Explored: {Math.round((1 - unexploredMass) * 100)}% · Reserve:{' '}
+                Explored: {Math.round((1 - unexploredMass) * 100)}% · Unexplored:{' '}
                 {Math.round(unexploredMass * 100)}%
               </span>
             </div>
@@ -719,7 +683,7 @@ function ObservatoryInner() {
             <div className="lg:col-span-7 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                  Branch probability table
+                  Simulated futures comparison table
                 </h2>
                 <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
                   {branchNodes.length} branches · Click any row to fly camera
@@ -731,7 +695,7 @@ function ObservatoryInner() {
                   <thead>
                     <tr style={{ backgroundColor: theme.surfaceAlt }}>
                       <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
-                        Branch
+                        Future Outcome
                       </th>
                       <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
                         Horizon
@@ -810,14 +774,14 @@ function ObservatoryInner() {
                   <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
                     Prioritize {recommendedNode.title} at{' '}
                     {Math.round(recommendedNode.conditionalProbability * 100)}% likelihood. Lock
-                    annual prepay terms in the first week and monitor checkpoint:{' '}
+                    annual prepay terms in the first 14 days and monitor warning sign:{' '}
                     {recommendedNode.tripwires?.[0] || 'Signed pilot within 45 days'}.
                   </p>
                 </div>
               )}
             </div>
 
-            {/* Right Column (5 cols): Focused Portal Inspector & Sensitivity Levers */}
+            {/* Right Column (5 cols): Focused Arch Inspector & What-If Sliders */}
             <div className="lg:col-span-5 space-y-4">
               {selectedNode && (
                 <div className="p-4 space-y-2.5" style={{ backgroundColor: theme.ground }}>
@@ -835,7 +799,7 @@ function ObservatoryInner() {
 
                   <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
                     {selectedNode.narrativeSummary ||
-                      'Selected trajectory portal in the sanctuary.'}
+                      'Selected trajectory arch in the sanctuary.'}
                   </p>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
@@ -858,7 +822,7 @@ function ObservatoryInner() {
               <div className="p-4 space-y-3" style={{ backgroundColor: theme.ground }}>
                 <div className="flex items-center justify-between">
                   <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                    Sensitivity levers
+                    What-if sliders
                   </h2>
                   <button
                     type="button"
@@ -866,14 +830,14 @@ function ObservatoryInner() {
                     className="px-2.5 py-1 text-sm font-medium"
                     style={{ backgroundColor: theme.surface, color: theme.ink }}
                   >
-                    Reset
+                    Reset sliders
                   </button>
                 </div>
                 <div className="space-y-2">
                   {[
                     {
                       key: 'executionVelocity' as keyof SliderDeltas,
-                      label: 'Shipping speed',
+                      label: 'Execution & shipping speed',
                     },
                     {
                       key: 'capitalBuffer' as keyof SliderDeltas,
@@ -881,11 +845,11 @@ function ObservatoryInner() {
                     },
                     {
                       key: 'marketTailwind' as keyof SliderDeltas,
-                      label: 'Demand tailwind',
+                      label: 'Market demand tailwinds',
                     },
                     {
                       key: 'skillPreparation' as keyof SliderDeltas,
-                      label: 'Team readiness',
+                      label: 'Team technical readiness',
                     },
                   ].map((lever) => {
                     const val = sensitivityLevers[lever.key];

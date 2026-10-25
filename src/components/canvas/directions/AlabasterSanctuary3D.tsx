@@ -32,12 +32,36 @@ interface MonolithCoord {
 interface MonolithSpec extends MonolithCoord {
   isRecommended: boolean;
   isSelected: boolean;
+  rank: number;
 }
 
 const ORIGIN_Z = 6.5;
 const WATER_Y = -0.35;
+const STREAM_PARTICLE_COUNT = 280;
+const MOTE_PARTICLE_COUNT = 120;
 
-function MonolithSculpture({
+function createParabolicArchCurve(
+  span: number,
+  baseY: number,
+  apexHeight: number,
+  zSweep: number,
+  zOffset = 0,
+  exponent = 1.82
+): THREE.CatmullRomCurve3 {
+  const pts: THREE.Vector3[] = [];
+  const segments = 28;
+  for (let i = 0; i <= segments; i++) {
+    const u = (i / segments) * 2 - 1; // [-1, 1]
+    const x = u * span;
+    const archFactor = Math.max(0, 1 - Math.pow(Math.abs(u), exponent));
+    const y = baseY + apexHeight * archFactor;
+    const z = zOffset - Math.cos((u * Math.PI) / 2) * zSweep;
+    pts.push(new THREE.Vector3(x, y, z));
+  }
+  return new THREE.CatmullRomCurve3(pts);
+}
+
+function ArchSculpture({
   spec,
   skylightTexture,
   onSelect,
@@ -48,10 +72,15 @@ function MonolithSculpture({
   onSelect: () => void;
   reducedMotion: boolean;
 }) {
-  const sphereRef = useRef<THREE.Mesh>(null);
+  const astrolabeGroupRef = useRef<THREE.Group>(null);
+  const ring1Ref = useRef<THREE.Mesh>(null);
+  const ring2Ref = useRef<THREE.Mesh>(null);
+  const ring3Ref = useRef<THREE.Mesh>(null);
+  const crownHaloRef = useRef<THREE.Mesh>(null);
   const ripple1Ref = useRef<THREE.Mesh>(null);
   const ripple2Ref = useRef<THREE.Mesh>(null);
   const groupRef = useRef<THREE.Group>(null);
+
   const riseRef = useRef<number>(reducedMotion ? 1.0 : 0.08);
   const currentHeightRef = useRef<number>(spec.height);
   const currentWidthRef = useRef<number>(spec.width);
@@ -63,6 +92,65 @@ function MonolithSculpture({
     }
     return (h / 0xffff) * Math.PI * 2;
   }, [spec.id]);
+
+  const archSpan = Math.max(0.62, spec.width * 0.96);
+  const archHeight = Math.max(1.85, spec.height * 0.94);
+  const baseY = 0.34;
+  const archTubeR = Math.max(0.092, spec.width * 0.118);
+
+  // Sculpted Catenary / Parabolic Carrara Marble Arch Geometries
+  const { outerArchGeo, crestArchGeo, innerRibGeo } = useMemo(() => {
+    const outerCurve = createParabolicArchCurve(
+      archSpan,
+      baseY,
+      archHeight,
+      spec.width * 0.15,
+      0,
+      1.84
+    );
+    const crestCurve = createParabolicArchCurve(
+      archSpan * 1.04,
+      baseY + 0.04,
+      archHeight + 0.15,
+      spec.width * 0.15,
+      -0.05,
+      1.92
+    );
+    const innerCurve = createParabolicArchCurve(
+      archSpan * 0.85,
+      baseY,
+      archHeight * 0.88,
+      spec.width * 0.11,
+      0.02,
+      1.76
+    );
+
+    return {
+      outerArchGeo: new THREE.TubeGeometry(outerCurve, 64, archTubeR, 24, false),
+      crestArchGeo: new THREE.TubeGeometry(
+        crestCurve,
+        64,
+        archTubeR * 0.48,
+        20,
+        false
+      ),
+      innerRibGeo: new THREE.TubeGeometry(
+        innerCurve,
+        64,
+        archTubeR * 0.44,
+        20,
+        false
+      ),
+    };
+  }, [archSpan, archHeight, archTubeR, spec.width]);
+
+  useEffect(() => {
+    return () => {
+      outerArchGeo.dispose();
+      crestArchGeo.dispose();
+      innerRibGeo.dispose();
+    };
+  }, [outerArchGeo, crestArchGeo, innerRibGeo]);
 
   useFrame(({ clock }, delta) => {
     const t = clock.getElapsedTime() + phaseOffset;
@@ -90,68 +178,92 @@ function MonolithSculpture({
     if (groupRef.current) {
       const hRatio = currentHeightRef.current / Math.max(0.5, spec.height);
       const wRatio = currentWidthRef.current / Math.max(0.3, spec.width);
-      groupRef.current.scale.set(wRatio, Math.max(0.05, riseRef.current * hRatio), wRatio);
+      groupRef.current.scale.set(
+        wRatio,
+        Math.max(0.05, riseRef.current * hRatio),
+        wRatio
+      );
     }
 
-    if (!reducedMotion && sphereRef.current) {
-      sphereRef.current.position.y =
-        0.38 + spec.height * 0.52 + Math.sin(t * 1.45) * 0.1;
-      sphereRef.current.rotation.y = t * 0.5;
-      sphereRef.current.rotation.x = Math.sin(t * 0.7) * 0.2;
+    if (!reducedMotion) {
+      if (astrolabeGroupRef.current) {
+        astrolabeGroupRef.current.position.y =
+          baseY + archHeight * 0.54 + Math.sin(t * 1.35) * 0.08;
+      }
+      if (ring1Ref.current) {
+        ring1Ref.current.rotation.y = t * 0.62;
+        ring1Ref.current.rotation.x = Math.PI / 6 + Math.sin(t * 0.45) * 0.22;
+      }
+      if (ring2Ref.current) {
+        ring2Ref.current.rotation.x = -t * 0.78;
+        ring2Ref.current.rotation.z = Math.PI / 3 + Math.cos(t * 0.52) * 0.25;
+      }
+      if (ring3Ref.current) {
+        ring3Ref.current.rotation.z = t * 0.95;
+        ring3Ref.current.rotation.y = -Math.PI / 5 + Math.sin(t * 0.6) * 0.3;
+      }
+      if (crownHaloRef.current) {
+        crownHaloRef.current.rotation.z = t * 0.4;
+        crownHaloRef.current.position.y =
+          baseY + archHeight + 0.38 + Math.sin(t * 1.6) * 0.04;
+      }
     }
 
     if (!reducedMotion && ripple1Ref.current && ripple2Ref.current) {
-      const cycle1 = (t * 0.3) % 1;
-      const cycle2 = (t * 0.3 + 0.5) % 1;
+      const cycle1 = (t * 0.28) % 1;
+      const cycle2 = (t * 0.28 + 0.5) % 1;
       const baseR = spec.width;
-      const s1 = baseR * (1.0 + cycle1 * 0.92);
-      const s2 = baseR * (1.0 + cycle2 * 0.92);
+      const s1 = baseR * (1.05 + cycle1 * 0.95);
+      const s2 = baseR * (1.05 + cycle2 * 0.95);
       ripple1Ref.current.scale.set(s1, s1, 1);
       ripple2Ref.current.scale.set(s2, s2, 1);
 
       const mat1 = ripple1Ref.current.material as THREE.MeshBasicMaterial;
       const mat2 = ripple2Ref.current.material as THREE.MeshBasicMaterial;
-      if (mat1) mat1.opacity = (1 - cycle1) * (spec.isRecommended ? 0.38 : 0.22);
-      if (mat2) mat2.opacity = (1 - cycle2) * (spec.isRecommended ? 0.38 : 0.22);
+      if (mat1) mat1.opacity = (1 - cycle1) * (spec.isRecommended ? 0.4 : 0.24);
+      if (mat2) mat2.opacity = (1 - cycle2) * (spec.isRecommended ? 0.4 : 0.24);
     }
   });
 
-  const bladeW = spec.width * 0.33;
-  const slitGap = spec.width * 0.34;
-  const bladeDepth = spec.width * 0.62;
-  const rightBladeH = spec.height * 0.91;
-
-  const mainStoneColor = spec.isRecommended
-    ? '#F7F5F0'
+  const mainMarbleColor = spec.isRecommended
+    ? '#FAF8F3'
     : spec.isSelected
-    ? '#F5F3EE'
-    : '#E7E2D6';
+    ? '#F6F4EF'
+    : '#EAE5D9';
 
-  const innerPortalColor = spec.isRecommended
-    ? '#1E4D6B'
+  const crestStoneColor = spec.isRecommended
+    ? '#EFECE4'
     : spec.isSelected
-    ? '#161615'
-    : '#787368';
+    ? '#E8E4DA'
+    : '#DED8CA';
 
-  const lintelColor = spec.isRecommended
+  const innerRibColor = spec.isRecommended
     ? '#C49A45'
     : spec.isSelected
     ? '#1E4D6B'
-    : '#C7C0B1';
+    : '#707C84';
 
-  const plinthColor = spec.isRecommended
+  const pedestalColor = spec.isRecommended
     ? '#1E4D6B'
     : spec.isSelected
-    ? '#26292C'
+    ? '#263540'
     : '#CFC9BC';
 
-  const sphereColor = spec.isRecommended
+  const astrolabeRingColor = spec.isRecommended
     ? '#C49A45'
+    : spec.isSelected
+    ? '#1E4D6B'
+    : '#5C6B73';
+
+  const coreSphereColor = spec.isRecommended
+    ? '#D4A94E'
     : spec.isSelected
     ? '#1E4D6B'
     : '#2C5975';
 
-  const sphereRadius = Math.max(0.16, spec.width * 0.2);
+  const pedR = Math.max(0.22, spec.width * 0.28);
+  const gimbalR = Math.max(0.24, spec.width * 0.31);
+  const gimbalTube = Math.max(0.015, gimbalR * 0.068);
 
   return (
     <group
@@ -174,7 +286,7 @@ function MonolithSculpture({
         position={[0, 0.02, 0]}
         scale={[spec.width, spec.width, 1]}
       >
-        <ringGeometry args={[1.15, 1.23, 48]} />
+        <ringGeometry args={[1.18, 1.26, 48]} />
         <meshBasicMaterial
           color={spec.isRecommended ? '#1E4D6B' : '#8A98A0'}
           transparent
@@ -189,30 +301,30 @@ function MonolithSculpture({
         position={[0, 0.025, 0]}
         scale={[spec.width, spec.width, 1]}
       >
-        <ringGeometry args={[1.15, 1.23, 48]} />
+        <ringGeometry args={[1.18, 1.26, 48]} />
         <meshBasicMaterial
           color={spec.isRecommended ? '#C49A45' : '#8A98A0'}
           transparent
-          opacity={0.2}
+          opacity={0.22}
           side={THREE.DoubleSide}
           depthWrite={false}
         />
       </mesh>
 
-      {/* Volumetric Overhead Skylight Shaft (Soft Gradient Falloff) for Recommended or Selected Path */}
+      {/* Volumetric Overhead Skylight Shaft for Recommended or Selected Arch */}
       {(spec.isRecommended || spec.isSelected) && (
         <group position={[0, 0, 0]}>
           <mesh
             position={[0.65, spec.height * 0.5 + 5.2, 0.3]}
             rotation={[0.05, 0, -0.1]}
-            scale={[spec.width * 3.1, 13.5, 1]}
+            scale={[spec.width * 3.2, 13.5, 1]}
           >
             <planeGeometry args={[1, 1]} />
             <meshBasicMaterial
               map={skylightTexture ?? undefined}
               color={spec.isRecommended ? '#FFFDF6' : '#F2F6F8'}
               transparent
-              opacity={spec.isRecommended ? 0.34 : 0.24}
+              opacity={spec.isRecommended ? 0.36 : 0.24}
               side={THREE.DoubleSide}
               depthWrite={false}
             />
@@ -220,7 +332,7 @@ function MonolithSculpture({
           <mesh
             position={[0.65, spec.height * 0.5 + 5.2, 0.3]}
             rotation={[0.05, Math.PI / 2, -0.1]}
-            scale={[spec.width * 3.1, 13.5, 1]}
+            scale={[spec.width * 3.2, 13.5, 1]}
           >
             <planeGeometry args={[1, 1]} />
             <meshBasicMaterial
@@ -233,17 +345,17 @@ function MonolithSculpture({
             />
           </mesh>
 
-          {/* Soft Skylight Reflection Pool on Water Surface */}
+          {/* Glacial / Golden Reflection Pool on Water Surface */}
           <mesh
             rotation={[-Math.PI / 2, 0, 0]}
             position={[0, 0.015, 0]}
-            scale={[spec.width * 1.8, spec.width * 1.8, 1]}
+            scale={[spec.width * 1.9, spec.width * 1.9, 1]}
           >
-            <circleGeometry args={[1, 40]} />
+            <circleGeometry args={[1, 48]} />
             <meshBasicMaterial
-              color={spec.isRecommended ? '#C49A45' : '#1E4D6B'}
+              color={spec.isRecommended ? '#1E4D6B' : '#2C5975'}
               transparent
-              opacity={spec.isRecommended ? 0.2 : 0.14}
+              opacity={spec.isRecommended ? 0.26 : 0.16}
               depthWrite={false}
             />
           </mesh>
@@ -251,145 +363,208 @@ function MonolithSculpture({
       )}
 
       <group ref={groupRef}>
-        {/* Stepped Octagonal Travertine Plinth Submerged in Water */}
-        <mesh
-          position={[0, 0.11, 0]}
-          scale={[spec.width, 1, spec.width]}
-          receiveShadow
-          castShadow
-        >
-          <cylinderGeometry args={[1.25, 1.4, 0.22, 8]} />
+        {/* Submerged Circular Travertine Water Foundation Terrace */}
+        <mesh position={[0, 0.08, 0]} receiveShadow castShadow>
+          <cylinderGeometry
+            args={[archSpan * 1.28, archSpan * 1.44, 0.16, 32]}
+          />
           <meshPhysicalMaterial
-            color={plinthColor}
-            roughness={0.46}
+            color={pedestalColor}
+            roughness={0.44}
             metalness={0.12}
-            clearcoat={0.2}
+            clearcoat={0.22}
           />
         </mesh>
 
-        <mesh
-          position={[0, 0.29, 0]}
-          scale={[spec.width, 1, spec.width]}
-          receiveShadow
-          castShadow
-        >
-          <cylinderGeometry args={[0.95, 1.07, 0.18, 8]} />
+        {/* Left & Right Sculpted Stepped Cylindrical Travertine Pedestals + Torus Collars */}
+        {[-archSpan, archSpan].map((px, sideIdx) => (
+          <group key={sideIdx} position={[px, 0, 0]}>
+            <mesh position={[0, 0.2, 0]} receiveShadow castShadow>
+              <cylinderGeometry args={[pedR * 0.95, pedR * 1.16, 0.18, 32]} />
+              <meshPhysicalMaterial
+                color={crestStoneColor}
+                roughness={0.48}
+                metalness={0.05}
+                clearcoat={0.16}
+              />
+            </mesh>
+            <mesh position={[0, 0.31, 0]} receiveShadow castShadow>
+              <cylinderGeometry args={[pedR * 0.76, pedR * 0.92, 0.14, 32]} />
+              <meshPhysicalMaterial
+                color={mainMarbleColor}
+                roughness={0.42}
+                metalness={0.04}
+                clearcoat={0.2}
+              />
+            </mesh>
+            {/* Carved Marble & Bronze Torus Collar Where Arch Springs Upward */}
+            <mesh
+              position={[0, baseY + 0.03, 0]}
+              rotation={[Math.PI / 2, 0, 0]}
+              castShadow
+              receiveShadow
+            >
+              <torusGeometry args={[archTubeR * 1.32, archTubeR * 0.36, 20, 36]} />
+              <meshStandardMaterial
+                color={innerRibColor}
+                roughness={spec.isRecommended ? 0.24 : 0.42}
+                metalness={spec.isRecommended ? 0.62 : 0.25}
+              />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Primary Soaring Parabolic / Catenary Carrara Marble Arch */}
+        <mesh geometry={outerArchGeo} castShadow receiveShadow>
           <meshPhysicalMaterial
-            color={mainStoneColor}
-            roughness={0.52}
+            color={mainMarbleColor}
+            roughness={0.42}
+            metalness={0.03}
+            clearcoat={0.24}
+            clearcoatRoughness={0.2}
+          />
+        </mesh>
+
+        {/* Secondary Fluted Extrados Marble Crest Rib */}
+        <mesh geometry={crestArchGeo} castShadow receiveShadow>
+          <meshPhysicalMaterial
+            color={crestStoneColor}
+            roughness={0.5}
             metalness={0.04}
             clearcoat={0.15}
           />
         </mesh>
 
-        {/* Left Alabaster Portal Blade */}
-        <mesh
-          position={[-(slitGap * 0.5 + bladeW * 0.5), 0.38 + spec.height * 0.5, 0]}
-          scale={[bladeW, spec.height, bladeDepth]}
-          castShadow
-          receiveShadow
-        >
-          <boxGeometry args={[1, 1, 1]} />
-          <meshPhysicalMaterial
-            color={mainStoneColor}
-            roughness={0.5}
-            metalness={0.03}
-            clearcoat={0.18}
-          />
-        </mesh>
-
-        {/* Left Blade Inner Mineral Portal Facing (Offset cleanly inside slit to prevent coplanar z-fighting) */}
-        <mesh
-          position={[-(slitGap * 0.5 - 0.019), 0.38 + spec.height * 0.5, 0]}
-          scale={[0.034, spec.height * 0.96, bladeDepth * 0.86]}
-        >
-          <boxGeometry args={[1, 1, 1]} />
+        {/* Inner Recessed Bronze / Glacial Mineral Arch Rib */}
+        <mesh geometry={innerRibGeo} castShadow>
           <meshStandardMaterial
-            color={innerPortalColor}
-            roughness={0.35}
-            metalness={0.22}
+            color={innerRibColor}
+            roughness={spec.isRecommended ? 0.22 : 0.36}
+            metalness={spec.isRecommended ? 0.68 : 0.32}
           />
         </mesh>
 
-        {/* Right Alabaster Portal Blade (Asymmetric Chillida/Ando Proportion) */}
+        {/* Vertical Filigree Suspension Rod from Arch Apex to Astrolabe */}
         <mesh
-          position={[slitGap * 0.5 + bladeW * 0.5, 0.38 + rightBladeH * 0.5, 0]}
-          scale={[bladeW, rightBladeH, bladeDepth]}
-          castShadow
-          receiveShadow
-        >
-          <boxGeometry args={[1, 1, 1]} />
-          <meshPhysicalMaterial
-            color={mainStoneColor}
-            roughness={0.5}
-            metalness={0.03}
-            clearcoat={0.18}
-          />
-        </mesh>
-
-        {/* Right Blade Inner Mineral Portal Facing (Offset cleanly inside slit to prevent coplanar z-fighting) */}
-        <mesh
-          position={[slitGap * 0.5 - 0.019, 0.38 + rightBladeH * 0.5, 0]}
-          scale={[0.034, rightBladeH * 0.96, bladeDepth * 0.86]}
-        >
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial
-            color={innerPortalColor}
-            roughness={0.35}
-            metalness={0.22}
-          />
-        </mesh>
-
-        {/* Cantilevered Upper Stone / Bronze Lintel Bridge */}
-        <mesh
-          position={[0.04, 0.38 + spec.height * 0.77, 0]}
-          scale={[
-            spec.width * 1.48,
-            Math.max(0.18, spec.height * 0.065),
-            bladeDepth * 1.18,
+          position={[
+            0,
+            baseY + archHeight * 0.76,
+            -spec.width * 0.11,
           ]}
-          castShadow
-          receiveShadow
         >
-          <boxGeometry args={[1, 1, 1]} />
+          <cylinderGeometry
+            args={[0.009, 0.009, archHeight * 0.42, 12]}
+          />
           <meshStandardMaterial
-            color={lintelColor}
-            roughness={spec.isRecommended ? 0.26 : 0.48}
-            metalness={spec.isRecommended ? 0.52 : 0.12}
+            color={astrolabeRingColor}
+            roughness={0.25}
+            metalness={0.65}
           />
         </mesh>
 
-        {/* Lower Architectural Threshold Sill */}
-        <mesh
-          position={[0, 0.38 + spec.height * 0.16, 0]}
-          scale={[spec.width * 1.14, 0.12, bladeDepth * 0.82]}
-          castShadow
-          receiveShadow
+        {/* Multi-Ring Rotating Kinetic Astrolabe / Orbital Gimbal Suspended Inside Arch */}
+        <group
+          ref={astrolabeGroupRef}
+          position={[0, baseY + archHeight * 0.54, -spec.width * 0.11]}
         >
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial
-            color={innerPortalColor}
-            roughness={0.42}
-            metalness={0.18}
-          />
-        </mesh>
+          {/* Outer Gimbal Ring */}
+          <mesh
+            ref={ring1Ref}
+            rotation={[Math.PI / 6, 0, Math.PI / 10]}
+            castShadow
+          >
+            <torusGeometry args={[gimbalR * 1.38, gimbalTube, 20, 64]} />
+            <meshStandardMaterial
+              color={astrolabeRingColor}
+              roughness={0.22}
+              metalness={spec.isRecommended ? 0.72 : 0.45}
+            />
+          </mesh>
 
-        {/* Levitating Mineral / Champagne Bronze Sphere Suspended in Portal Slit */}
-        <mesh
-          ref={sphereRef}
-          position={[0, 0.38 + spec.height * 0.52, 0]}
-          scale={[sphereRadius, sphereRadius, sphereRadius]}
-          castShadow
-        >
-          <sphereGeometry args={[1, 32, 32]} />
-          <meshPhysicalMaterial
-            color={sphereColor}
-            roughness={0.16}
-            metalness={spec.isRecommended ? 0.68 : 0.38}
-            clearcoat={0.85}
-            clearcoatRoughness={0.1}
-          />
-        </mesh>
+          {/* Middle Counter-Rotating Orbital Ring */}
+          <mesh
+            ref={ring2Ref}
+            rotation={[0, Math.PI / 4, Math.PI / 3]}
+            castShadow
+          >
+            <torusGeometry
+              args={[gimbalR * 1.08, gimbalTube * 0.88, 20, 64]}
+            />
+            <meshStandardMaterial
+              color={spec.isRecommended ? '#1E4D6B' : '#8A949A'}
+              roughness={0.26}
+              metalness={0.5}
+            />
+          </mesh>
+
+          {/* Inner Meridian Ring */}
+          <mesh
+            ref={ring3Ref}
+            rotation={[Math.PI / 3, -Math.PI / 5, 0]}
+            castShadow
+          >
+            <torusGeometry
+              args={[gimbalR * 0.8, gimbalTube * 0.76, 20, 64]}
+            />
+            <meshStandardMaterial
+              color={astrolabeRingColor}
+              roughness={0.2}
+              metalness={0.68}
+            />
+          </mesh>
+
+          {/* Luminous Alabaster / Mineral Core Sphere */}
+          <mesh castShadow>
+            <sphereGeometry args={[gimbalR * 0.44, 32, 32]} />
+            <meshPhysicalMaterial
+              color={coreSphereColor}
+              roughness={0.14}
+              metalness={spec.isRecommended ? 0.72 : 0.38}
+              clearcoat={0.9}
+              clearcoatRoughness={0.08}
+            />
+          </mesh>
+
+          {/* Soft Inner Halo Mesh */}
+          <mesh>
+            <sphereGeometry args={[gimbalR * 0.64, 24, 24]} />
+            <meshBasicMaterial
+              color={spec.isRecommended ? '#F5D78E' : '#8FB8D0'}
+              transparent
+              opacity={spec.isRecommended ? 0.24 : 0.14}
+              depthWrite={false}
+            />
+          </mesh>
+        </group>
+
+        {/* Crown Golden-Bronze Halo Ring Above Recommended Path Arch Apex */}
+        {spec.isRecommended && (
+          <group>
+            <mesh
+              ref={crownHaloRef}
+              position={[0, baseY + archHeight + 0.38, -spec.width * 0.14]}
+              rotation={[Math.PI / 2 - 0.18, 0, 0]}
+              castShadow
+            >
+              <torusGeometry args={[spec.width * 0.44, 0.026, 20, 64]} />
+              <meshStandardMaterial
+                color="#C49A45"
+                roughness={0.18}
+                metalness={0.78}
+              />
+            </mesh>
+            <mesh
+              position={[0, baseY + archHeight + 0.38, -spec.width * 0.14]}
+            >
+              <sphereGeometry args={[0.075, 20, 20]} />
+              <meshStandardMaterial
+                color="#C49A45"
+                roughness={0.16}
+                metalness={0.8}
+              />
+            </mesh>
+          </group>
+        )}
       </group>
     </group>
   );
@@ -407,8 +582,12 @@ export default function AlabasterSanctuary3D({
   const terrainRef = useRef<THREE.Mesh>(null);
   const waterRef = useRef<THREE.Mesh>(null);
   const mistGroupRef = useRef<THREE.Group>(null);
-  const originOrbRef = useRef<THREE.Mesh>(null);
-  const { camera, size } = useThree();
+  const originAstrolabeRef = useRef<THREE.Group>(null);
+  const streamPointsRef = useRef<THREE.Points>(null);
+  const motePointsRef = useRef<THREE.Points>(null);
+  const labelOverlayRef = useRef<HTMLDivElement | null>(null);
+  const labelMapRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const { camera, size, gl } = useThree();
 
   const activeBranches = useMemo(() => {
     return nodes
@@ -420,13 +599,12 @@ export default function AlabasterSanctuary3D({
       });
   }, [nodes]);
 
-  // 1. Spatial coordinates & valley geometry (independent of selectedNodeId so clicking a portal never recomputes terrain!)
+  // 1. Spatial coordinates & valley geometry (independent of selectedNodeId so clicking an arch never recomputes terrain!)
   const monolithCoords: MonolithCoord[] = useMemo(() => {
     const coordMap = new Map<string, MonolithCoord>();
     const depth1 = activeBranches.filter((n) => n.depth === 1);
     const deeper = activeBranches.filter((n) => n.depth > 1);
 
-    // Group Depth-1 branches by waveNumber so Wave 1 stays symmetrically anchored while Wave 2+ rises in a wider outer amphitheater arc
     const byWave = new Map<number, ProbabilityNode[]>();
     depth1.forEach((node) => {
       const w = node.waveNumber || 1;
@@ -440,13 +618,16 @@ export default function AlabasterSanctuary3D({
       const maxSpreadX = waveNum === 1 ? 6.3 : 7.6 + (waveNum - 2) * 1.0;
       const waveStaggerX = waveNum > 1 ? (waveNum % 2 === 0 ? 0.38 : -0.38) : 0;
 
+      const crescendoOrder = [2, 1, 3, 0, 4];
       waveNodes.forEach((node, idx) => {
-        const spread = wCount === 1 ? 0 : (idx / (wCount - 1)) * 2 - 1; // [-1, 1] per wave
+        const slotIdx =
+          waveNum === 1 && wCount === 5 ? crescendoOrder[idx] ?? idx : idx;
+        const spread = wCount === 1 ? 0 : (slotIdx / (wCount - 1)) * 2 - 1;
         const x = spread * maxSpreadX + waveStaggerX;
         const z =
-          -1.05 -
+          -1.15 -
           (waveNum - 1) * 3.1 -
-          Math.abs(spread) * (waveNum === 1 ? 1.35 : 1.5);
+          Math.abs(spread) * (waveNum === 1 ? 1.25 : 1.5);
         const prob = Math.max(0.04, Math.min(0.92, node.conditionalProbability));
 
         const coord: MonolithCoord = {
@@ -457,8 +638,8 @@ export default function AlabasterSanctuary3D({
           x,
           z,
           prob,
-          height: 1.75 + prob * 6.4,
-          width: 0.72 + prob * 1.05,
+          height: 1.85 + prob * 6.5,
+          width: 0.74 + prob * 1.06,
           valleyDepth: 1.05 + prob * 2.3,
           valleyWidth: 1.2 + prob * 1.65,
         };
@@ -466,7 +647,6 @@ export default function AlabasterSanctuary3D({
       });
     });
 
-    // Group Depth 2+ downstream branches by parentId so they rise further down the canyon
     const byParent = new Map<string, ProbabilityNode[]>();
     deeper.forEach((node) => {
       const pid = node.parentId || '';
@@ -503,8 +683,8 @@ export default function AlabasterSanctuary3D({
           x,
           z,
           prob,
-          height: 1.5 + prob * 5.2,
-          width: 0.64 + prob * 0.85,
+          height: 1.6 + prob * 5.2,
+          width: 0.66 + prob * 0.85,
           valleyDepth: 0.95 + prob * 1.8,
           valleyWidth: 1.05 + prob * 1.3,
         };
@@ -516,11 +696,15 @@ export default function AlabasterSanctuary3D({
   }, [activeBranches]);
 
   const monoliths: MonolithSpec[] = useMemo(() => {
+    const sortedIds = [...monolithCoords]
+      .sort((a, b) => b.prob - a.prob)
+      .map((m) => m.id);
     return monolithCoords.map((c) => ({
       ...c,
       isRecommended:
         goldenPathIds.includes(c.id) || Boolean(c.node.isGoldenPath),
       isSelected: c.id === selectedNodeId,
+      rank: sortedIds.indexOf(c.id) + 1,
     }));
   }, [monolithCoords, goldenPathIds, selectedNodeId]);
 
@@ -547,7 +731,6 @@ export default function AlabasterSanctuary3D({
       const originMound =
         Math.exp(-(distFromOriginPass * distFromOriginPass) / 8.5) * 0.68;
 
-      // Flanking marble ridges on outer perimeter
       const lateralRidge =
         Math.pow(Math.max(0, (Math.abs(x) - 5.2) / 14.0), 1.45) * 3.4;
       const horizonRidge =
@@ -565,7 +748,6 @@ export default function AlabasterSanctuary3D({
         foregroundSlope +
         Math.cos(x * 0.32 + z * 0.2) * 0.11;
 
-      // Carve smooth radiating valleys from Origin Pass to each monolith's water basin
       for (const m of monolithCoords) {
         const zMin = Math.min(m.startZ, m.z);
         const zMax = Math.max(m.startZ, m.z);
@@ -588,19 +770,20 @@ export default function AlabasterSanctuary3D({
           m.valleyDepth * Math.exp(-(dx * dx) / (2 * vw * vw)) * zEnv;
         h -= carve;
 
-        // Guarantee an open water basin floor below WATER_Y around every monolith so ridges never clip portals
         const distToBasin = Math.hypot(x - m.x, z - m.z);
-        const basinRadius = m.width * 2.5;
+        const basinRadius = m.width * 2.6;
         if (distToBasin < basinRadius * 1.8) {
           const basinWeight = Math.exp(
-            -(distToBasin * distToBasin) / (2 * basinRadius * basinRadius * 0.45)
+            -(distToBasin * distToBasin) /
+              (2 * basinRadius * basinRadius * 0.45)
           );
           const targetBasinFloor = WATER_Y - 0.34;
-          h = h * (1 - basinWeight) + Math.min(h, targetBasinFloor) * basinWeight;
+          h =
+            h * (1 - basinWeight) +
+            Math.min(h, targetBasinFloor) * basinWeight;
         }
       }
 
-      // Smooth architectural stepped travertine terraces on positive elevations
       if (h > -0.15) {
         const terraceFreq = 3.0;
         const stepped = Math.floor(h * terraceFreq) / terraceFreq;
@@ -617,7 +800,6 @@ export default function AlabasterSanctuary3D({
   const planeW = 68;
   const planeD = 56;
 
-  // Allocate the 196x196 PlaneGeometry ONCE and dispose on unmount (zero WebGL buffer leaks on click/drag)
   const terrainGeometry = useMemo(() => {
     const geo = new THREE.PlaneGeometry(planeW, planeD, gridSegs, gridSegs);
     geo.rotateX(-Math.PI / 2);
@@ -631,7 +813,6 @@ export default function AlabasterSanctuary3D({
 
   const terrainInitializedRef = useRef(false);
 
-  // Compute target heights and smooth continuous vertex colors whenever branch probabilities or waves change
   const targetTerrainHeights = useMemo(() => {
     const pos = terrainGeometry.attributes.position;
     const colorAttr = terrainGeometry.attributes.color as THREE.BufferAttribute;
@@ -661,13 +842,11 @@ export default function AlabasterSanctuary3D({
         tmp.lerpColors(midTravertine, highMarble, (elevNorm - 0.45) / 0.55);
       }
 
-      // Smooth continuous Carrara marble veining (no hard boolean threshold speckles)
       const veinWave =
         0.5 + 0.5 * Math.sin(x * 0.72 + Math.cos(z * 0.55) * 2.0 + h * 1.4);
       const veinBlend = Math.pow(veinWave, 4.0) * 0.26;
       tmp.lerp(veinColor, veinBlend);
 
-      // Smooth continuous travertine terrace contour shading (eliminates vertex polka-dot artifacts)
       if (h > -0.1) {
         const terraceWave =
           0.5 + 0.5 * Math.cos((h + 4.0) * 3.0 * Math.PI * 2.0);
@@ -689,21 +868,69 @@ export default function AlabasterSanctuary3D({
     return heights;
   }, [terrainGeometry, evalTerrainHeight]);
 
-  // Specular Reflective Water Basin Geometry
   const waterGeometry = useMemo(() => {
     const geo = new THREE.PlaneGeometry(64, 52, 72, 72);
     geo.rotateX(-Math.PI / 2);
     return geo;
   }, []);
 
+  // Origin Sanctuary Crown Arch Geometry
+  const originArchGeo = useMemo(() => {
+    const curve = createParabolicArchCurve(1.08, 0.22, 1.58, 0.18, 0, 1.85);
+    return new THREE.TubeGeometry(curve, 56, 0.085, 22, false);
+  }, []);
+
+  const originInnerArchGeo = useMemo(() => {
+    const curve = createParabolicArchCurve(0.92, 0.22, 1.4, 0.14, 0.02, 1.78);
+    return new THREE.TubeGeometry(curve, 56, 0.038, 18, false);
+  }, []);
+
+  // Perimeter Semicircular Sanctuary Colonnade Arches Around Far Amphitheater Rim
+  const perimeterColonnade = useMemo(() => {
+    const items: {
+      x: number;
+      z: number;
+      rotY: number;
+      geo: THREE.TubeGeometry;
+    }[] = [];
+    const count = 9;
+    for (let i = 0; i < count; i++) {
+      const frac = i / (count - 1) - 0.5; // [-0.5, 0.5]
+      const angle = frac * Math.PI * 0.82;
+      const radiusX = 16.8;
+      const x = Math.sin(angle) * radiusX;
+      const z = -3.8 - Math.cos(angle) * 9.6;
+      const height = 5.4 + (1 - Math.abs(frac) * 0.5) * 2.2;
+      const span = 1.25;
+      const curve = createParabolicArchCurve(span, 0, height, 0.22, 0, 1.86);
+      const geo = new THREE.TubeGeometry(curve, 48, 0.13, 18, false);
+      items.push({
+        x,
+        z,
+        rotY: -angle * 0.85,
+        geo,
+      });
+    }
+    return items;
+  }, []);
+
   useEffect(() => {
     return () => {
       terrainGeometry.dispose();
       waterGeometry.dispose();
+      originArchGeo.dispose();
+      originInnerArchGeo.dispose();
+      perimeterColonnade.forEach((c) => c.geo.dispose());
     };
-  }, [terrainGeometry, waterGeometry]);
+  }, [
+    terrainGeometry,
+    waterGeometry,
+    originArchGeo,
+    originInnerArchGeo,
+    perimeterColonnade,
+  ]);
 
-  // Luminous Water-Stream Ribbons Flowing from Origin Sanctuary into Each Monolith's Basin
+  // Luminous Water-Stream Curves Flowing from Origin Fountain into Each Arch's Basin
   const streamCurves = useMemo(() => {
     return monolithCoords.map((m) => {
       const pts: THREE.Vector3[] = [];
@@ -715,15 +942,124 @@ export default function AlabasterSanctuary3D({
         const meander = Math.sin(t * Math.PI) * (m.x - m.startX) * 0.08;
         const x = m.startX + (m.x - m.startX) * easeT + meander;
         const terrainY = evalTerrainHeight(x, z);
-        const y = Math.max(WATER_Y + 0.04, terrainY + 0.05);
+        const y = Math.max(WATER_Y + 0.03, terrainY + 0.04);
         pts.push(new THREE.Vector3(x, y, z));
       }
+      const isRecommended =
+        goldenPathIds.includes(m.id) || Boolean(m.node.isGoldenPath);
       return {
         id: m.id,
+        isRecommended,
         curve: new THREE.CatmullRomCurve3(pts),
       };
     });
-  }, [monolithCoords, evalTerrainHeight]);
+  }, [monolithCoords, evalTerrainHeight, goldenPathIds]);
+
+  // Flowing Stream Particle System (280 Luminous Particles Drifting Along River Curves)
+  const { streamParticleGeo, streamParticleMeta } = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    const positions = new Float32Array(STREAM_PARTICLE_COUNT * 3);
+    const colors = new Float32Array(STREAM_PARTICLE_COUNT * 3);
+    const meta: {
+      curveIdx: number;
+      phase: number;
+      speed: number;
+      lateral: number;
+    }[] = [];
+
+    const goldColor = new THREE.Color('#D4A646');
+    const glacialColor = new THREE.Color('#1E6B8C');
+    const silverBlue = new THREE.Color('#6C8D9E');
+    const tmpColor = new THREE.Color();
+    const curveCount = Math.max(1, streamCurves.length);
+
+    for (let i = 0; i < STREAM_PARTICLE_COUNT; i++) {
+      const curveIdx = i % curveCount;
+      const sCurve = streamCurves[curveIdx];
+      const isRec = sCurve?.isRecommended ?? false;
+      const phase = ((i * 37) % 1000) / 1000;
+      const speed = isRec
+        ? 0.16 + ((i * 17) % 10) * 0.008
+        : 0.09 + ((i * 13) % 10) * 0.006;
+      const lateral = (((i * 29) % 100) / 100 - 0.5) * (isRec ? 0.36 : 0.24);
+      meta.push({ curveIdx, phase, speed, lateral });
+
+      if (sCurve) {
+        const pt = sCurve.curve.getPoint(phase);
+        positions[i * 3] = pt.x + lateral;
+        positions[i * 3 + 1] = pt.y + 0.05;
+        positions[i * 3 + 2] = pt.z;
+      }
+
+      if (isRec) {
+        tmpColor.lerpColors(goldColor, glacialColor, (i % 5) / 4);
+      } else {
+        tmpColor.copy(silverBlue);
+      }
+      colors[i * 3] = tmpColor.r;
+      colors[i * 3 + 1] = tmpColor.g;
+      colors[i * 3 + 2] = tmpColor.b;
+    }
+
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    return { streamParticleGeo: geo, streamParticleMeta: meta };
+  }, [streamCurves]);
+
+  // Atmospheric Sunlit Light Motes (120 Floating Particles Above Sanctuary Basin)
+  const { moteParticleGeo, moteMeta } = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    const positions = new Float32Array(MOTE_PARTICLE_COUNT * 3);
+    const meta: {
+      x: number;
+      y: number;
+      z: number;
+      speed: number;
+      phase: number;
+    }[] = [];
+
+    for (let i = 0; i < MOTE_PARTICLE_COUNT; i++) {
+      const x = (((i * 73) % 1000) / 1000 - 0.5) * 24;
+      const y = 0.35 + (((i * 41) % 1000) / 1000) * 5.8;
+      const z = -9.5 + (((i * 59) % 1000) / 1000) * 16.5;
+      const speed = 0.25 + ((i * 19) % 10) * 0.03;
+      const phase = ((i * 31) % 100) * 0.0628;
+      meta.push({ x, y, z, speed, phase });
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+    }
+
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    return { moteParticleGeo: geo, moteMeta: meta };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      streamParticleGeo.dispose();
+      moteParticleGeo.dispose();
+    };
+  }, [streamParticleGeo, moteParticleGeo]);
+
+  // Soft Radial Glow Texture for Stream & Atmospheric Particles
+  const particleTexture = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      const grad = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+      grad.addColorStop(0.45, 'rgba(255, 252, 242, 0.65)');
+      grad.addColorStop(1, 'rgba(255, 252, 242, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+    }
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.needsUpdate = true;
+    return tex;
+  }, []);
 
   // Soft Procedural Radial Cloud Alpha Texture for Drifting Mist Veils
   const mistTexture = useMemo(() => {
@@ -734,8 +1070,8 @@ export default function AlabasterSanctuary3D({
     const ctx = canvas.getContext('2d');
     if (ctx) {
       const grad = ctx.createRadialGradient(64, 64, 6, 64, 64, 62);
-      grad.addColorStop(0, 'rgba(246, 244, 239, 0.52)');
-      grad.addColorStop(0.5, 'rgba(243, 241, 236, 0.22)');
+      grad.addColorStop(0, 'rgba(246, 244, 239, 0.48)');
+      grad.addColorStop(0.5, 'rgba(243, 241, 236, 0.2)');
       grad.addColorStop(1, 'rgba(243, 241, 236, 0.0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, 128, 128);
@@ -745,7 +1081,7 @@ export default function AlabasterSanctuary3D({
     return tex;
   }, []);
 
-  // Soft 2D Volumetric Skylight Beam Alpha Texture (feathered horizontal & vertical edges so there is never a hard cut)
+  // Soft 2D Volumetric Skylight Beam Alpha Texture
   const skylightTexture = useMemo(() => {
     if (typeof document === 'undefined') return null;
     const canvas = document.createElement('canvas');
@@ -756,7 +1092,7 @@ export default function AlabasterSanctuary3D({
       const imgData = ctx.createImageData(128, 256);
       const data = imgData.data;
       for (let y = 0; y < 256; y++) {
-        const v = y / 255; // 0 = top, 1 = bottom
+        const v = y / 255;
         const vEnv = Math.sin(v * Math.PI) * Math.pow(1 - v * 0.35, 0.7);
         const halfWidth = 0.26 + v * 0.22;
         for (let x = 0; x < 128; x++) {
@@ -779,10 +1115,11 @@ export default function AlabasterSanctuary3D({
 
   useEffect(() => {
     return () => {
+      particleTexture?.dispose();
       mistTexture?.dispose();
       skylightTexture?.dispose();
     };
-  }, [mistTexture, skylightTexture]);
+  }, [particleTexture, mistTexture, skylightTexture]);
 
   const mistVeils = useMemo(
     () => [
@@ -797,32 +1134,33 @@ export default function AlabasterSanctuary3D({
     []
   );
 
-  // Camera Choreography State (Scroll Spline + Fly-To-Monolith Mode)
-  const targetCamPos = useRef(new THREE.Vector3(0, 4.5, 11.6));
-  const targetLookAt = useRef(new THREE.Vector3(0, -0.35, -1.5));
-  const currentLookAt = useRef(new THREE.Vector3(0, -0.35, -1.5));
+  const targetCamPos = useRef(new THREE.Vector3(-1.8, 4.45, 11.6));
+  const targetLookAt = useRef(new THREE.Vector3(-2.1, -0.35, -1.5));
+  const currentLookAt = useRef(new THREE.Vector3(-2.1, -0.35, -1.5));
+  const tmpPoint = useMemo(() => new THREE.Vector3(), []);
 
   useFrame(({ clock }, delta) => {
     const t = clock.getElapsedTime();
     const aspect = size.width / Math.max(1, size.height);
     const pullback = aspect < 1.2 ? 1.22 / Math.max(0.68, aspect) : 1.0;
+    // Shift optical center slightly left on desktop scroll mode so all 5 arches frame cleanly in the open right 70% of the screen
+    const desktopRightFrameOffset = aspect >= 1.15 ? -2.05 : 0;
 
     // 1. Determine Target Camera Position & LookAt from Camera Mode
     if (cameraMode === 'focus' && selectedMonolith) {
-      // Fly-To-Monolith Mode: physically glide down over the water pool to frame the selected portal
-      const sideOffset = selectedMonolith.x >= 0 ? -1.85 : 1.85;
+      const sideOffset = selectedMonolith.x >= 0 ? -1.65 : 1.65;
+      const focusShift = aspect >= 1.15 ? -0.95 : 0;
       targetCamPos.current.set(
-        selectedMonolith.x * 0.82 + sideOffset,
-        WATER_Y + 2.15 * pullback,
-        selectedMonolith.z + 4.55 * pullback
+        selectedMonolith.x * 0.82 + sideOffset + focusShift,
+        WATER_Y + 2.18 * pullback,
+        selectedMonolith.z + 4.65 * pullback
       );
       targetLookAt.current.set(
-        selectedMonolith.x,
-        WATER_Y + Math.min(2.15, selectedMonolith.height * 0.46),
+        selectedMonolith.x + focusShift,
+        WATER_Y + Math.min(2.2, selectedMonolith.height * 0.48),
         selectedMonolith.z
       );
     } else if (cameraMode === 'overview') {
-      // Panoramic Sanctuary Overview
       const hasDeep = monoliths.some((m) => m.node.depth > 1);
       targetCamPos.current.set(
         0,
@@ -831,7 +1169,7 @@ export default function AlabasterSanctuary3D({
       );
       targetLookAt.current.set(0, hasDeep ? 0.15 : -0.4, hasDeep ? -3.4 : -1.5);
     } else {
-      // Scroll Journey Mode: 4-stage cinematic spline across [0..1]
+      // Scroll Journey Mode: 3-step cinematic spline across [0..1]
       const s = Math.max(0, Math.min(1, scrollProgress));
       const rec = recommendedMonolith || {
         x: -1.6,
@@ -839,41 +1177,44 @@ export default function AlabasterSanctuary3D({
         height: 3.8,
       };
 
-      // Stage 0 (scroll 0.00): High sanctuary vista behind the Origin Pass with all 5 portals framed in the upper viewport
-      const p0 = new THREE.Vector3(0, 4.45 * pullback, 11.6 * pullback);
-      const l0 = new THREE.Vector3(0, -0.38, -1.5);
-
-      // Stage 1 (scroll 0.33): Gliding over the bifurcation water watershed
-      const p1 = new THREE.Vector3(-2.7, 3.25 * pullback, 7.0 * pullback);
-      const l1 = new THREE.Vector3(0.35, 0.35, -1.85);
-
-      // Stage 2 (scroll 0.66): Low sweep across the mirror water pool right up to the Recommended Path portal
-      const p2 = new THREE.Vector3(
-        rec.x * 0.68 + 1.65,
-        1.98 * pullback,
-        rec.z + 4.4 * pullback
+      // Step 1 (scroll 0.00): Panoramic sanctuary vista framing Origin Fountain and all 5 sculpted arches in the open right viewport
+      const p0 = new THREE.Vector3(
+        desktopRightFrameOffset * 0.85,
+        4.45 * pullback,
+        11.6 * pullback
       );
-      const l2 = new THREE.Vector3(rec.x, 1.22, rec.z);
+      const l0 = new THREE.Vector3(desktopRightFrameOffset, -0.32, -1.5);
 
-      // Stage 3 (scroll 1.00): Inside the interactive sculpture basin past the Origin Pass
-      const p3 = new THREE.Vector3(1.85, 2.95 * pullback, 5.4 * pullback);
-      const l3 = new THREE.Vector3(-0.35, 0.85, -2.25);
+      // Step 2 (scroll 0.50): Gliding low over the mirror water basin directly in front of the 5 arches
+      const p1 = new THREE.Vector3(
+        desktopRightFrameOffset * 0.9 - 1.2,
+        2.95 * pullback,
+        6.8 * pullback
+      );
+      const l1 = new THREE.Vector3(desktopRightFrameOffset * 0.85, 0.55, -2.0);
 
-      if (s < 0.333) {
-        const u = s / 0.333;
+      // Step 3 (scroll 1.00): Sweeping close-up right up to the Golden Recommended Path Arch & rotating kinetic astrolabe
+      const p2 = new THREE.Vector3(
+        rec.x * 0.75 + 1.35 + desktopRightFrameOffset * 0.55,
+        2.05 * pullback,
+        rec.z + 4.55 * pullback
+      );
+      const l2 = new THREE.Vector3(
+        rec.x + desktopRightFrameOffset * 0.55,
+        1.35,
+        rec.z
+      );
+
+      if (s < 0.5) {
+        const u = s / 0.5;
         const ease = u * u * (3 - 2 * u);
         targetCamPos.current.lerpVectors(p0, p1, ease);
         targetLookAt.current.lerpVectors(l0, l1, ease);
-      } else if (s < 0.666) {
-        const u = (s - 0.333) / 0.333;
+      } else {
+        const u = (s - 0.5) / 0.5;
         const ease = u * u * (3 - 2 * u);
         targetCamPos.current.lerpVectors(p1, p2, ease);
         targetLookAt.current.lerpVectors(l1, l2, ease);
-      } else {
-        const u = (s - 0.666) / 0.334;
-        const ease = u * u * (3 - 2 * u);
-        targetCamPos.current.lerpVectors(p2, p3, ease);
-        targetLookAt.current.lerpVectors(l2, l3, ease);
       }
     }
 
@@ -942,7 +1283,7 @@ export default function AlabasterSanctuary3D({
       }
     }
 
-    // 3. Subtle harmonic water surface ripples around monolith basins
+    // 3. Subtle harmonic water surface ripples around basins
     if (!reducedMotion && waterRef.current) {
       const wPos = waterRef.current.geometry.attributes.position;
       for (let i = 0; i < wPos.count; i++) {
@@ -956,7 +1297,44 @@ export default function AlabasterSanctuary3D({
       wPos.needsUpdate = true;
     }
 
-    // 4. Drift atmospheric mist veils slowly across the water basin
+    // 4. Advance 280 Flowing Stream Particles Along River Curves
+    if (!reducedMotion && streamPointsRef.current && streamCurves.length > 0) {
+      const posAttr = streamPointsRef.current.geometry.attributes
+        .position as THREE.BufferAttribute;
+      for (let i = 0; i < STREAM_PARTICLE_COUNT; i++) {
+        const m = streamParticleMeta[i];
+        const sCurve = streamCurves[m.curveIdx % streamCurves.length];
+        if (!sCurve) continue;
+        const u = (m.phase + t * m.speed) % 1.0;
+        sCurve.curve.getPoint(u, tmpPoint);
+        const shimmerX = Math.sin(t * 2.2 + i) * 0.05;
+        const shimmerY = Math.cos(t * 2.8 + i * 0.5) * 0.02;
+        posAttr.setXYZ(
+          i,
+          tmpPoint.x + m.lateral + shimmerX,
+          tmpPoint.y + 0.06 + shimmerY,
+          tmpPoint.z
+        );
+      }
+      posAttr.needsUpdate = true;
+    }
+
+    // 5. Gently Float 120 Atmospheric Light Motes in Sunlit Air
+    if (!reducedMotion && motePointsRef.current) {
+      const moteAttr = motePointsRef.current.geometry.attributes
+        .position as THREE.BufferAttribute;
+      for (let i = 0; i < MOTE_PARTICLE_COUNT; i++) {
+        const m = moteMeta[i];
+        const mx = m.x + Math.sin(t * m.speed + m.phase) * 0.45;
+        const my =
+          0.35 + ((m.y + t * m.speed * 0.35) % 5.8);
+        const mz = m.z + Math.cos(t * m.speed * 0.8 + m.phase) * 0.35;
+        moteAttr.setXYZ(i, mx, my, mz);
+      }
+      moteAttr.needsUpdate = true;
+    }
+
+    // 6. Drift atmospheric mist veils slowly across the water basin
     if (!reducedMotion && mistGroupRef.current) {
       mistGroupRef.current.children.forEach((child, idx) => {
         const spec = mistVeils[idx];
@@ -967,12 +1345,112 @@ export default function AlabasterSanctuary3D({
       });
     }
 
-    // 5. Gently levitate Origin Sanctuary Ocular Sphere
-    if (!reducedMotion && originOrbRef.current) {
-      originOrbRef.current.position.y = 0.62 + Math.sin(t * 1.4) * 0.055;
-      originOrbRef.current.rotation.y = t * 0.45;
+    // 7. Rotate Origin Sanctuary Kinetic Astrolabe
+    if (!reducedMotion && originAstrolabeRef.current) {
+      originAstrolabeRef.current.position.y =
+        0.92 + Math.sin(t * 1.4) * 0.05;
+      originAstrolabeRef.current.rotation.y = t * 0.55;
+      originAstrolabeRef.current.rotation.z = Math.sin(t * 0.7) * 0.25;
+    }
+
+    // 8. Project 3D Arch Threshold Coordinates to Floating HUD Labels
+    if (size.width >= 640 && labelMapRef.current.size > 0) {
+      for (const spec of monoliths) {
+        const el = labelMapRef.current.get(spec.id);
+        if (!el) continue;
+        const labelY =
+          Math.abs(spec.x) < 0.5
+            ? WATER_Y + 0.34 + spec.height * 0.36
+            : WATER_Y + 0.62;
+        tmpPoint.set(spec.x, labelY, spec.z + spec.width * 0.52);
+        tmpPoint.project(camera);
+        if (tmpPoint.z > 1) {
+          el.style.display = 'none';
+        } else {
+          const px = (tmpPoint.x * 0.5 + 0.5) * size.width;
+          const py = (-tmpPoint.y * 0.5 + 0.5) * size.height;
+          el.style.display = 'block';
+          el.style.transform = `translate3d(${px.toFixed(1)}px,${py.toFixed(
+            1
+          )}px,0) translate3d(-50%,-50%,0)`;
+        }
+      }
     }
   });
+
+  // Deterministic DOM Label Overlay Attached to R3F Canvas Wrapper (Avoids React 19 createRoot Race in @react-three/drei <Html>)
+  useEffect(() => {
+    const parent = gl.domElement.parentElement;
+    if (!parent) return;
+    const overlay = document.createElement('div');
+    overlay.style.cssText =
+      'position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5;';
+    parent.appendChild(overlay);
+    labelOverlayRef.current = overlay;
+    const mapRef = labelMapRef.current;
+    return () => {
+      mapRef.clear();
+      if (overlay.parentElement) {
+        overlay.parentElement.removeChild(overlay);
+      }
+      labelOverlayRef.current = null;
+    };
+  }, [gl]);
+
+  useEffect(() => {
+    const overlay = labelOverlayRef.current;
+    if (!overlay) return;
+    overlay.innerHTML = '';
+    labelMapRef.current.clear();
+    if (size.width < 640) return;
+
+    for (const spec of monoliths) {
+      if (spec.node.depth !== 1 || spec.node.waveNumber !== 1) continue;
+      const pct = Math.round(spec.node.conditionalProbability * 100);
+      const shortTitle =
+        spec.node.title.length > 22
+          ? `${spec.node.title.slice(0, 20)}…`
+          : spec.node.title;
+
+      const badge = document.createElement('div');
+      badge.setAttribute('data-ui', 'true');
+      const bg = spec.isRecommended
+        ? '#1E4D6B'
+        : spec.isSelected
+        ? '#161615'
+        : '#F1F0EC';
+      const fg =
+        spec.isRecommended || spec.isSelected ? '#FFFFFF' : '#161615';
+      badge.style.cssText = `position:absolute;top:0;left:0;pointer-events:none;user-select:none;white-space:nowrap;padding:4px 8px;text-align:center;font-variant-numeric:tabular-nums;font-size:13px;line-height:1.25;background-color:${bg};color:${fg};`;
+
+      const line1 = document.createElement('div');
+      line1.style.fontWeight = '600';
+      line1.textContent = spec.isRecommended
+        ? `${pct}% · Recommended`
+        : `${pct}% likelihood`;
+
+      const line2 = document.createElement('div');
+      line2.style.fontWeight = '500';
+      line2.textContent = shortTitle;
+
+      badge.appendChild(line1);
+      badge.appendChild(line2);
+      overlay.appendChild(badge);
+      labelMapRef.current.set(spec.id, badge);
+
+      const labelY =
+        Math.abs(spec.x) < 0.5
+          ? WATER_Y + 0.34 + spec.height * 0.36
+          : WATER_Y + 0.62;
+      tmpPoint.set(spec.x, labelY, spec.z + spec.width * 0.52);
+      tmpPoint.project(camera);
+      const px = (tmpPoint.x * 0.5 + 0.5) * size.width;
+      const py = (-tmpPoint.y * 0.5 + 0.5) * size.height;
+      badge.style.transform = `translate3d(${px.toFixed(1)}px,${py.toFixed(
+        1
+      )}px,0) translate3d(-50%,-50%,0)`;
+    }
+  }, [monoliths, size.width, size.height, camera, tmpPoint]);
 
   const originTerrainY = evalTerrainHeight(0, ORIGIN_Z);
 
@@ -980,24 +1458,24 @@ export default function AlabasterSanctuary3D({
     <group>
       {/* Luminous Diffused Alabaster Daylight Sky & Mist Horizon */}
       <color attach="background" args={['#F3F1EC']} />
-      <fogExp2 attach="fog" args={['#F3F1EC', 0.021]} />
+      <fogExp2 attach="fog" args={['#F3F1EC', 0.02]} />
 
       {/* Diffused Zenith Skylight + Warm Architectural Sun Shaft Key Light */}
       <hemisphereLight
         color="#FAF8F4"
         groundColor="#C9C2B4"
-        intensity={0.72}
+        intensity={0.75}
       />
       <directionalLight
         position={[15, 25, 11]}
-        intensity={1.8}
+        intensity={1.85}
         color="#FFF9EB"
         castShadow
         shadow-bias={-0.0005}
       />
       <directionalLight
         position={[-14, 12, -10]}
-        intensity={0.55}
+        intensity={0.58}
         color="#C9D8E2"
       />
 
@@ -1029,73 +1507,108 @@ export default function AlabasterSanctuary3D({
         />
       </mesh>
 
-      {/* Origin Sanctuary Threshold Pass (Low-profile Sculpted Spring & Flanking Threshold Gates at [0, y, 6.5]) */}
+      {/* Perimeter Sanctuary Colonnade of Slender Curved Alabaster Arches Along Far Amphitheater Rim */}
+      <group>
+        {perimeterColonnade.map((col, idx) => (
+          <group
+            key={`colonnade-${idx}`}
+            position={[col.x, WATER_Y, col.z]}
+            rotation={[0, col.rotY, 0]}
+          >
+            <mesh geometry={col.geo} receiveShadow castShadow>
+              <meshPhysicalMaterial
+                color="#ECE8DF"
+                roughness={0.52}
+                metalness={0.02}
+                clearcoat={0.14}
+              />
+            </mesh>
+          </group>
+        ))}
+      </group>
+
+      {/* Origin Sanctuary Fountain Shrine (Sculpted Parabolic Marble Crown Arch & Kinetic Origin Astrolabe at [0, y, 6.5]) */}
       <group position={[0, originTerrainY, ORIGIN_Z]}>
-        {/* Stepped Octagonal Travertine Sanctuary Terrace */}
-        <mesh position={[0, 0.09, 0]} receiveShadow castShadow>
-          <cylinderGeometry args={[1.42, 1.62, 0.18, 8]} />
+        {/* Stepped Circular Travertine Sanctuary Fountain Basin */}
+        <mesh position={[0, 0.08, 0]} receiveShadow castShadow>
+          <cylinderGeometry args={[1.48, 1.68, 0.16, 32]} />
           <meshPhysicalMaterial
             color="#EAE6DC"
-            roughness={0.5}
+            roughness={0.48}
             metalness={0.04}
-            clearcoat={0.16}
+            clearcoat={0.18}
           />
         </mesh>
-        <mesh position={[0, 0.22, 0]} receiveShadow castShadow>
-          <cylinderGeometry args={[1.02, 1.15, 0.12, 8]} />
+        <mesh position={[0, 0.2, 0]} receiveShadow castShadow>
+          <cylinderGeometry args={[1.08, 1.22, 0.12, 32]} />
           <meshStandardMaterial
             color="#1E4D6B"
-            roughness={0.32}
-            metalness={0.22}
+            roughness={0.28}
+            metalness={0.24}
           />
         </mesh>
 
-        {/* Horizontal Sculpted Ocular Spring Ring */}
+        {/* Sculpted Horizontal Marble Spring Ring */}
         <mesh
-          position={[0, 0.3, 0]}
+          position={[0, 0.28, 0]}
           rotation={[Math.PI / 2, 0, 0]}
           castShadow
           receiveShadow
         >
-          <torusGeometry args={[0.72, 0.06, 20, 48]} />
+          <torusGeometry args={[0.78, 0.065, 20, 48]} />
           <meshPhysicalMaterial
-            color="#F5F3EE"
+            color="#F7F5F0"
+            roughness={0.38}
+            metalness={0.05}
+            clearcoat={0.28}
+          />
+        </mesh>
+
+        {/* Sculpted Parabolic Marble & Bronze Crown Arch Over Origin Fountain */}
+        <mesh geometry={originArchGeo} castShadow receiveShadow>
+          <meshPhysicalMaterial
+            color="#F7F5F0"
             roughness={0.42}
-            metalness={0.06}
-            clearcoat={0.25}
+            metalness={0.03}
+            clearcoat={0.22}
           />
         </mesh>
-
-        {/* Low Flanking Threshold Gate Wings (Leaves central sightline to Depth-1 portals completely clear) */}
-        <mesh position={[-0.86, 0.5, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.16, 0.64, 0.44]} />
-          <meshPhysicalMaterial
-            color="#F5F3EE"
-            roughness={0.48}
-            metalness={0.04}
-            clearcoat={0.18}
-          />
-        </mesh>
-        <mesh position={[0.86, 0.46, 0]} castShadow receiveShadow>
-          <boxGeometry args={[0.16, 0.56, 0.44]} />
-          <meshPhysicalMaterial
-            color="#F5F3EE"
-            roughness={0.48}
-            metalness={0.04}
-            clearcoat={0.18}
-          />
-        </mesh>
-
-        {/* Suspended Champagne Bronze Origin Decision Sphere */}
-        <mesh ref={originOrbRef} position={[0, 0.62, 0]} castShadow>
-          <sphereGeometry args={[0.19, 32, 32]} />
-          <meshPhysicalMaterial
+        <mesh geometry={originInnerArchGeo} castShadow>
+          <meshStandardMaterial
             color="#C49A45"
-            roughness={0.18}
+            roughness={0.22}
             metalness={0.68}
-            clearcoat={0.85}
           />
         </mesh>
+
+        {/* Rotating Origin Decision Kinetic Astrolabe */}
+        <group ref={originAstrolabeRef} position={[0, 0.92, 0]}>
+          <mesh rotation={[Math.PI / 5, 0, Math.PI / 8]} castShadow>
+            <torusGeometry args={[0.36, 0.02, 20, 48]} />
+            <meshStandardMaterial
+              color="#C49A45"
+              roughness={0.2}
+              metalness={0.72}
+            />
+          </mesh>
+          <mesh rotation={[0, Math.PI / 3, Math.PI / 4]} castShadow>
+            <torusGeometry args={[0.27, 0.016, 20, 48]} />
+            <meshStandardMaterial
+              color="#1E4D6B"
+              roughness={0.24}
+              metalness={0.52}
+            />
+          </mesh>
+          <mesh castShadow>
+            <sphereGeometry args={[0.14, 32, 32]} />
+            <meshPhysicalMaterial
+              color="#C49A45"
+              roughness={0.16}
+              metalness={0.72}
+              clearcoat={0.88}
+            />
+          </mesh>
+        </group>
 
         {/* Soft Overhead Skylight Shaft on Origin Sanctuary */}
         {skylightTexture && (
@@ -1117,57 +1630,70 @@ export default function AlabasterSanctuary3D({
         )}
       </group>
 
-      {/* Flowing Water-Stream Ribbons from Origin Pass into Each Monolith Basin */}
+      {/* Low-Profile Translucent Specular Water Ribbons Along Valley Channels */}
       {streamCurves.map((s) => {
-        const isRecommended =
-          goldenPathIds.includes(s.id) ||
-          Boolean(nodes.find((n) => n.id === s.id)?.isGoldenPath);
         const isSelected = s.id === selectedNodeId;
         return (
           <group key={`stream-${s.id}`}>
-            <mesh scale={[1, 0.18, 1]}>
+            <mesh scale={[1, 0.07, 1]}>
               <tubeGeometry
                 args={[
                   s.curve,
                   48,
-                  isRecommended ? 0.34 : isSelected ? 0.24 : 0.16,
-                  10,
+                  s.isRecommended ? 0.36 : isSelected ? 0.25 : 0.16,
+                  12,
                   false,
                 ]}
               />
               <meshPhysicalMaterial
                 color={
-                  isRecommended
+                  s.isRecommended
                     ? '#1E4D6B'
                     : isSelected
-                    ? '#2B3E4C'
-                    : '#8B99A1'
+                    ? '#2B4C63'
+                    : '#9BB0BD'
                 }
-                roughness={0.08}
-                metalness={0.22}
+                transparent
+                opacity={s.isRecommended ? 0.68 : isSelected ? 0.52 : 0.36}
+                roughness={0.06}
+                metalness={0.18}
                 clearcoat={1.0}
-                clearcoatRoughness={0.06}
+                clearcoatRoughness={0.05}
               />
             </mesh>
-
-            {/* Champagne Bronze Aqueduct Rim Along Recommended Path Stream */}
-            {isRecommended && (
-              <mesh position={[0, -0.008, 0]} scale={[1, 0.12, 1]}>
-                <tubeGeometry args={[s.curve, 48, 0.44, 8, false]} />
-                <meshStandardMaterial
-                  color="#C49A45"
-                  roughness={0.28}
-                  metalness={0.55}
-                />
-              </mesh>
-            )}
           </group>
         );
       })}
 
-      {/* Architectural Twin-Blade Portal Monoliths Rising from Water Basins */}
+      {/* 280 Luminous Flowing Particles Drifting Along River Channels from Origin Fountain to Arches */}
+      <points ref={streamPointsRef} geometry={streamParticleGeo}>
+        <pointsMaterial
+          map={particleTexture ?? undefined}
+          size={0.24}
+          vertexColors
+          transparent
+          opacity={0.9}
+          depthWrite={false}
+          sizeAttenuation
+        />
+      </points>
+
+      {/* 120 Sunlit Atmospheric Light Motes Gently Floating Above the Sanctuary Basin */}
+      <points ref={motePointsRef} geometry={moteParticleGeo}>
+        <pointsMaterial
+          map={particleTexture ?? undefined}
+          color="#FFFDF6"
+          size={0.16}
+          transparent
+          opacity={0.58}
+          depthWrite={false}
+          sizeAttenuation
+        />
+      </points>
+
+      {/* Sculpted Parabolic Carrara Marble Arches & Rotating Kinetic Astrolabes */}
       {monoliths.map((spec) => (
-        <MonolithSculpture
+        <ArchSculpture
           key={spec.id}
           spec={spec}
           skylightTexture={skylightTexture}
@@ -1189,7 +1715,7 @@ export default function AlabasterSanctuary3D({
               <meshBasicMaterial
                 map={mistTexture}
                 transparent
-                opacity={0.42}
+                opacity={0.4}
                 depthWrite={false}
                 side={THREE.DoubleSide}
               />
