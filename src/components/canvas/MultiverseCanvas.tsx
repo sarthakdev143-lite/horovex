@@ -9,6 +9,7 @@ export interface MultiverseCanvasProps {
   cameraFov?: number;
   onNodeSelect?: (nodeId: string) => void;
   children?: React.ReactNode;
+  interactive?: boolean;
 }
 
 export default function MultiverseCanvas({
@@ -16,6 +17,7 @@ export default function MultiverseCanvas({
   cameraFov = 48,
   onNodeSelect,
   children,
+  interactive = true,
 }: MultiverseCanvasProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [hasContextError, setHasContextError] = useState(false);
@@ -62,6 +64,7 @@ export default function MultiverseCanvas({
   return (
     <div className={className}>
       <Canvas
+        style={{ pointerEvents: interactive ? 'auto' : 'none' }}
         gl={{
           antialias: true,
           alpha: false,
@@ -85,7 +88,7 @@ export default function MultiverseCanvas({
         }}
       >
         <Suspense fallback={null}>
-          <MultiverseScene onNodeSelect={onNodeSelect} />
+          <MultiverseScene interactive={interactive} onNodeSelect={onNodeSelect} />
           {children}
         </Suspense>
       </Canvas>

@@ -11,6 +11,7 @@ import { useMultiverseStore } from '@/lib/state/useMultiverseStore';
 
 interface MultiverseSceneProps {
   onNodeSelect?: (nodeId: string) => void;
+  interactive?: boolean;
 }
 
 function DepthStrata({ maxDepth = 4, step = 14 }: { maxDepth?: number; step?: number }) {
@@ -36,7 +37,13 @@ function DepthStrata({ maxDepth = 4, step = 14 }: { maxDepth?: number; step?: nu
   );
 }
 
-function CameraChoreographer({ selectedNodeId }: { selectedNodeId: string | null }) {
+function CameraChoreographer({
+  selectedNodeId,
+  interactive = true,
+}: {
+  selectedNodeId: string | null;
+  interactive?: boolean;
+}) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
   const nodes = useMultiverseStore((state) => state.nodes);
@@ -61,6 +68,8 @@ function CameraChoreographer({ selectedNodeId }: { selectedNodeId: string | null
     }
   });
 
+  if (!interactive) return null;
+
   return (
     <OrbitControls
       ref={controlsRef}
@@ -73,7 +82,10 @@ function CameraChoreographer({ selectedNodeId }: { selectedNodeId: string | null
   );
 }
 
-export default function MultiverseScene({ onNodeSelect }: MultiverseSceneProps) {
+export default function MultiverseScene({
+  onNodeSelect,
+  interactive = true,
+}: MultiverseSceneProps) {
   const nodes = useMultiverseStore((state) => state.nodes);
   const selectedNodeId = useMultiverseStore((state) => state.selectedNodeId);
   const hoveredNodeId = useMultiverseStore((state) => state.hoveredNodeId);
@@ -140,7 +152,7 @@ export default function MultiverseScene({ onNodeSelect }: MultiverseSceneProps) 
       </group>
 
       {/* Camera Rig & Orbit Controls */}
-      <CameraChoreographer selectedNodeId={selectedNodeId} />
+      <CameraChoreographer selectedNodeId={selectedNodeId} interactive={interactive} />
     </>
   );
 }

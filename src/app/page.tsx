@@ -1,7 +1,29 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { ArrowUpRight, Compass, Sparkles, Orbit, Sliders, Shield, ChevronRight } from "lucide-react";
+import { useMultiverseStore } from "@/lib/state/useMultiverseStore";
+import { flagshipFounderSaaSPivot } from "@/tests/fixtures/mock-scenarios";
+import { ProbabilityNode } from "@/lib/types/multiverse";
+
+const MultiverseCanvas = dynamic(
+  () => import("@/components/canvas/MultiverseCanvas"),
+  { ssr: false }
+);
 
 export default function LandingPage() {
+  useEffect(() => {
+    const scenario = flagshipFounderSaaSPivot;
+    const demoNodes: Record<string, ProbabilityNode> = {};
+    demoNodes[scenario.rootNode.id] = scenario.rootNode;
+    scenario.initialWave1.forEach((n) => {
+      demoNodes[n.id] = n;
+    });
+    useMultiverseStore.getState().setNodes(demoNodes);
+    useMultiverseStore.getState().setGoldenPath(scenario.expectedGoldenPathIds);
+  }, []);
   const flagshipDemos = [
     {
       id: "saas-pivot",
@@ -39,7 +61,11 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="relative min-h-screen bg-obsidian-vignette flex flex-col justify-between">
+    <div className="relative min-h-screen bg-obsidian-vignette flex flex-col justify-between overflow-hidden">
+      {/* 3D WebGL Background Canvas in Hero */}
+      <div className="absolute inset-x-0 top-0 h-[800px] z-0 opacity-40 pointer-events-none overflow-hidden">
+        <MultiverseCanvas interactive={false} className="w-full h-full relative min-h-[600px] pointer-events-none" />
+      </div>
       {/* 1. Precision Luxury Top Navigation */}
       <header className="sticky top-0 z-50 w-full border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -50,7 +76,7 @@ export default function LandingPage() {
             <div>
               <span className="font-serif text-2xl tracking-wider text-white font-medium">HOROVEX</span>
               <span className="block font-mono text-[9px] tracking-widest text-[#94A3B8] uppercase">
-                Chronometry & Decision Engine
+                Precision Chronometric Decision Engine
               </span>
             </div>
           </div>
@@ -68,6 +94,7 @@ export default function LandingPage() {
             </div>
             <Link
               href="/observatory"
+              data-testid="launch-observatory-btn"
               className="px-5 py-2.5 rounded-xl border border-[#D4AF37]/50 bg-[#18150D] text-[#F3E5AB] text-sm font-medium hover:border-[#D4AF37] hover:bg-[#221D12] transition-all shadow-[0_0_20px_rgba(212,175,55,0.15)] flex items-center gap-2 group"
             >
               <span>Launch Observatory</span>

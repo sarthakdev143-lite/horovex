@@ -152,10 +152,10 @@ Every feature identified during the authoritative survey is cataloged and assign
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
 | M1 | Foundation & Obsidian Chronometry 3D Observatory | Bootstrap Next.js 15, React 19, Three.js, R3F, Tailwind CSS, Obsidian theme, R3F Canvas, bioluminescent filaments, camera controller, Vitest test harness, and Git workflow setup | none | DONE |
-| M2 | Multiverse Recursion Engine & 3D Conical Layout | Implement Clarifying Pulse, Wave 1 generator, Horizontal Expansion `+5 More`, Infinite Vertical Recursion, cumulative probability engine, and 3D conical layout with collision solver ($d_{\min} \ge 3.2$) | M1 | PLANNED |
-| M3 | Strategic Mentor Engine & Golden Path Solver | Implement Digital Twin vault, Multi-Objective Utility $U(n)$, Bellman Expected Utility solver, Golden Path tracer in `#D4AF37`, Strategic Advisory HUD, 14-Day Playbook, Tripwires, and 3 Flagship Demos | M2 | PLANNED |
-| M4 | Sensitivity Levers, Wavefunction Collapse & Dual Persistence | Implement 60 FPS Softmax logit levers, Reality Check-In wavefunction collapse, Multi-Provider AI adapter + deterministic fallback engine, Supabase SQL schema + Guest Sandbox, 2D Chronicle Matrix, and Dossier Export | M3 | PLANNED |
-| M5 | Final Milestone: Full E2E Test Pass & Adversarial Hardening | Phase 1: Pass 100% of E2E Test Suite (Tiers 1-4). Phase 2: Tier 5 Adversarial Coverage Hardening with Challenger -> Worker -> Reviewer loop | M4, TEST_READY.md | PLANNED |
+| M2 | Multiverse Recursion Engine & 3D Conical Layout | Implement Clarifying Pulse, Wave 1 generator, Horizontal Expansion `+5 More`, Infinite Vertical Recursion, cumulative probability engine, and 3D conical layout with collision solver ($d_{\min} \ge 3.2$) | M1 | DONE |
+| M3 | Strategic Mentor Engine & Golden Path Solver | Implement Digital Twin vault, Multi-Objective Utility $U(n)$, Bellman Expected Utility solver, Golden Path tracer in `#D4AF37`, Strategic Advisory HUD, 14-Day Playbook, Tripwires, and 3 Flagship Demos | M2 | DONE |
+| M4 | Sensitivity Levers, Wavefunction Collapse & Dual Persistence | Implement 60 FPS Softmax logit levers, Reality Check-In wavefunction collapse, Multi-Provider AI adapter + deterministic fallback engine, Supabase SQL schema + Guest Sandbox, 2D Chronicle Matrix, and Dossier Export | M3 | DONE |
+| M5 | Final Milestone: Full E2E Test Pass & Adversarial Hardening | Phase 1: Pass 100% of E2E Test Suite (Tiers 1-4). Phase 2: Tier 5 Adversarial Coverage Hardening with Challenger -> Worker -> Reviewer loop | M4, TEST_READY.md | DONE |
 
 ---
 

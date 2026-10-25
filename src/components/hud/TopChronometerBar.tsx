@@ -26,7 +26,7 @@ export function TopChronometerBar({
   onToggleTwin,
 }: TopChronometerBarProps) {
   return (
-    <div className="pointer-events-auto flex items-center justify-between w-full max-w-7xl mx-auto px-5 py-2.5 rounded-2xl glass-panel hairline-border shadow-glass-depth">
+    <div data-testid="top-chronometer-bar" className="pointer-events-auto flex items-center justify-between w-full max-w-7xl mx-auto px-5 py-2.5 rounded-2xl glass-panel hairline-border shadow-glass-depth">
       {/* Left: Brand, Rotating Chronometer & Dilemma Title */}
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -74,20 +74,22 @@ export function TopChronometerBar({
         <button
           type="button"
           onClick={onToggleViewMode}
+          aria-label="2D Chronicle Matrix View"
           className={`px-3 py-1.5 rounded-xl border font-mono text-xs flex items-center gap-1.5 transition-all ${
             activeViewMode === "2d"
               ? "bg-[#00F0FF]/15 border-[#00F0FF]/40 text-[#00F0FF]"
               : "bg-white/[0.04] border-white/[0.08] text-[#94A3B8] hover:text-white"
           }`}
-          title="Toggle 2D Accessible Chronicle Matrix View"
+          title="Toggle 2D Chronicle Matrix View"
         >
           <Table className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">2D Matrix</span>
+          <span className="hidden sm:inline">2D Chronicle Matrix</span>
         </button>
 
         <button
           type="button"
           onClick={onToggleLevers}
+          aria-label="Sensitivity Levers"
           className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-[#94A3B8] hover:text-white font-mono text-xs flex items-center gap-1.5 transition-all hover:border-[#8B5CF6]/40"
           title="Adjust Real-Time Sensitivity Levers"
         >
@@ -98,11 +100,12 @@ export function TopChronometerBar({
         <button
           type="button"
           onClick={onToggleMentor}
+          aria-label="Golden Path & Optimal Trajectory"
           className="px-3 py-1.5 rounded-xl bg-[#14120B] border border-[#D4AF37]/40 text-[#F3E5AB] font-mono text-xs flex items-center gap-1.5 transition-all hover:bg-[#1E190E] shadow-[0_0_10px_rgba(212,175,55,0.15)]"
-          title="Open Mentor Strategic Advisory"
+          title="Golden Path & Optimal Trajectory"
         >
           <Compass className="w-3.5 h-3.5 text-[#D4AF37]" />
-          <span className="hidden sm:inline">Mentor</span>
+          <span className="hidden sm:inline">Golden Path</span>
         </button>
 
         <button
