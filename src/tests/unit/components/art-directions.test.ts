@@ -1,3 +1,5 @@
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { DIRECTION_THEMES } from '@/lib/directions/themes';
 import { flagshipFounderSaaSPivot } from '@/tests/fixtures/mock-scenarios';
@@ -7,7 +9,7 @@ import { perturbProbabilities, SliderDeltas } from '@/lib/math/sensitivity';
 import { generateDeterministicWave } from '@/lib/ai/adapter';
 
 describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & Live Engine Integration', () => {
-  it('defines signature sanctuary and all 3 secondary art directions (sanctuary, landscape, instrument, darkroom) with valid palettes and 4 raster plates each', () => {
+  it('defines signature sanctuary and all 3 secondary art directions (sanctuary, landscape, instrument, darkroom) with valid palettes and 4 raster plates on disk each', () => {
     expect(DIRECTION_THEMES.sanctuary).toBeDefined();
     expect(DIRECTION_THEMES.landscape).toBeDefined();
     expect(DIRECTION_THEMES.instrument).toBeDefined();
@@ -24,6 +26,9 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
         expect(plate.src).toMatch(/^\/assets\/.*\.png$/);
         expect(plate.title.length).toBeGreaterThan(3);
         expect(plate.caption.length).toBeGreaterThan(20);
+        const absPath = join(process.cwd(), 'public', plate.src);
+        expect(existsSync(absPath)).toBe(true);
+        expect(statSync(absPath).size).toBeGreaterThan(10000);
       }
     }
 

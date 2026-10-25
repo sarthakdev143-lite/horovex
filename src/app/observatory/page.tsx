@@ -552,34 +552,43 @@ function ObservatoryInner() {
                 <span className="text-sm font-semibold" style={{ color: theme.ink }}>
                   Fly camera to portal:
                 </span>
-                {branchNodes.slice(0, 6).map((node) => {
-                  const isRec =
-                    goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
-                  const isSel = selectedNode?.id === node.id && cameraMode === 'focus';
-                  return (
-                    <button
-                      key={node.id}
-                      type="button"
-                      onClick={() => handleFocusPortal(node.id)}
-                      className="px-2.5 py-1 text-sm font-medium tabular-nums"
-                      style={{
-                        backgroundColor: isRec
-                          ? theme.accent
-                          : isSel
-                          ? theme.ink
-                          : theme.ground,
-                        color: isRec
-                          ? theme.accentFg
-                          : isSel
-                          ? theme.ground
-                          : theme.ink,
-                      }}
-                    >
-                      {Math.round(node.conditionalProbability * 100)}% ·{' '}
-                      {node.title.length > 22 ? `${node.title.slice(0, 20)}…` : node.title}
-                    </button>
-                  );
-                })}
+                {[...branchNodes]
+                  .sort((a, b) => {
+                    const aActive = a.depth === (activeDepth || 1) ? 1 : 0;
+                    const bActive = b.depth === (activeDepth || 1) ? 1 : 0;
+                    if (aActive !== bActive) return bActive - aActive;
+                    return b.conditionalProbability - a.conditionalProbability;
+                  })
+                  .slice(0, 10)
+                  .map((node) => {
+                    const isRec =
+                      goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
+                    const isSel = selectedNode?.id === node.id && cameraMode === 'focus';
+                    return (
+                      <button
+                        key={node.id}
+                        type="button"
+                        onClick={() => handleFocusPortal(node.id)}
+                        className="px-2.5 py-1 text-sm font-medium tabular-nums"
+                        style={{
+                          backgroundColor: isRec
+                            ? theme.accent
+                            : isSel
+                            ? theme.ink
+                            : theme.ground,
+                          color: isRec
+                            ? theme.accentFg
+                            : isSel
+                            ? theme.ground
+                            : theme.ink,
+                        }}
+                      >
+                        {node.depth > 1 ? `D${node.depth} · ` : ''}
+                        {Math.round(node.conditionalProbability * 100)}% ·{' '}
+                        {node.title.length > 22 ? `${node.title.slice(0, 20)}…` : node.title}
+                      </button>
+                    );
+                  })}
               </div>
 
               <div className="flex items-center gap-2">
@@ -595,7 +604,7 @@ function ObservatoryInner() {
             </div>
 
             {/* Full-Width 3D WebGL Sanctuary Stage */}
-            <div className="w-full h-[460px] sm:h-[520px] relative">
+            <div className="w-full min-h-[520px] lg:min-h-[620px] h-[520px] lg:h-[620px] relative">
               <DirectionCanvas
                 direction={direction}
                 nodes={nodeList}

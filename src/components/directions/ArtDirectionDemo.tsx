@@ -596,7 +596,7 @@ export default function ArtDirectionDemo({
         className="sticky top-0 z-30 w-full hv-motion-item"
         style={{ backgroundColor: theme.ground, color: theme.ink }}
       >
-        <div className="max-w-[1320px] mx-auto px-6 md:px-10 py-2.5 min-h-[60px] flex flex-wrap items-center justify-between gap-3">
+        <div className="max-w-[1320px] mx-auto px-6 md:px-10 py-2.5 min-h-[60px] flex flex-wrap items-center justify-between gap-2.5">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -605,51 +605,43 @@ export default function ArtDirectionDemo({
             >
               HOROVEX
             </Link>
-            <span
-              className="hidden xl:inline text-base"
-              style={{ color: theme.mutedInk }}
-            >
-              {theme.subtitle}
-            </span>
+            <div className="hidden xl:flex items-center gap-3 text-sm">
+              <a
+                href="#origin-threshold"
+                className="font-medium"
+                style={{ color: theme.mutedInk }}
+              >
+                Origin
+              </a>
+              <a
+                href="#bifurcation-basin"
+                className="font-medium"
+                style={{ color: theme.mutedInk }}
+              >
+                Watershed
+              </a>
+              <a
+                href="#golden-path-sanctuary"
+                className="font-medium"
+                style={{ color: theme.mutedInk }}
+              >
+                Recommended
+              </a>
+              <a
+                href="#flagship-demos"
+                className="font-medium"
+                style={{ color: theme.mutedInk }}
+              >
+                Currents
+              </a>
+            </div>
           </div>
 
-          <nav
-            aria-label="Sanctuary camera and scene controls"
-            className="flex flex-wrap items-center gap-1 p-1"
-            style={{ backgroundColor: theme.surface }}
-          >
-            {(
-              [
-                { id: 'sanctuary', label: 'Sanctuary' },
-                { id: 'landscape', label: 'Landscape' },
-                { id: 'instrument', label: 'Instrument' },
-                { id: 'darkroom', label: 'Dark Room' },
-              ] as { id: ArtDirectionId; label: string }[]
-            ).map((item) => {
-              const isActive = direction === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleSwitchDirection(item.id)}
-                  data-testid={`switch-direction-${item.id}`}
-                  className="px-2.5 py-1.5 text-sm font-medium transition-transform active:scale-95"
-                  style={{
-                    backgroundColor: isActive ? theme.accent : 'transparent',
-                    color: isActive ? theme.accentFg : theme.ink,
-                  }}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="hidden sm:flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:order-3">
             <button
               type="button"
               onClick={() => setCameraMode('overview')}
-              className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
+              className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
               style={{ backgroundColor: theme.surface, color: theme.ink }}
             >
               Full garden
@@ -657,7 +649,7 @@ export default function ArtDirectionDemo({
             <button
               type="button"
               onClick={() => setPureGardenView((prev) => !prev)}
-              className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
+              className="hidden sm:inline-block px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
               style={{
                 backgroundColor: pureGardenView ? theme.ink : theme.surface,
                 color: pureGardenView ? theme.ground : theme.ink,
@@ -679,17 +671,103 @@ export default function ArtDirectionDemo({
               Enter Sanctuary
             </Link>
           </div>
+
+          <nav
+            aria-label="Sanctuary camera and scene controls"
+            className="w-full sm:w-auto sm:order-2 flex items-center justify-between sm:justify-start gap-1 p-1"
+            style={{ backgroundColor: theme.surface }}
+          >
+            {(
+              [
+                { id: 'sanctuary', label: 'Sanctuary' },
+                { id: 'landscape', label: 'Landscape' },
+                { id: 'instrument', label: 'Instrument' },
+                { id: 'darkroom', label: 'Dark Room' },
+              ] as { id: ArtDirectionId; label: string }[]
+            ).map((item) => {
+              const isActive = direction === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleSwitchDirection(item.id)}
+                  data-testid={`switch-direction-${item.id}`}
+                  className="flex-1 sm:flex-initial px-2 py-1.5 text-sm font-medium text-center transition-transform active:scale-95"
+                  style={{
+                    backgroundColor: isActive ? theme.accent : 'transparent',
+                    color: isActive ? theme.accentFg : theme.ink,
+                  }}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </header>
+
+      {/* FLOATING CONTROL STRIP WHEN IN PURE 3D GARDEN VIEW */}
+      {pureGardenView && (
+        <div className="fixed bottom-5 inset-x-0 z-20 pointer-events-none">
+          <div className="max-w-[1320px] mx-auto px-6 md:px-10 flex justify-center">
+            <div
+              data-ui="true"
+              className="p-3 flex flex-wrap items-center gap-3 pointer-events-auto"
+              style={{ backgroundColor: theme.ground, color: theme.ink }}
+            >
+              <span className="text-sm font-semibold" style={{ color: theme.ink }}>
+                {selectedNode ? `Focused: ${selectedNode.title}` : 'Alabaster Sanctuary 3D'}
+              </span>
+              {branchNodes.slice(0, 5).map((node) => (
+                <button
+                  key={node.id}
+                  type="button"
+                  onClick={() => handleFocusNode(node.id)}
+                  className="px-2.5 py-1 text-sm font-medium tabular-nums"
+                  style={{
+                    backgroundColor:
+                      selectedNode?.id === node.id ? theme.accent : theme.surface,
+                    color:
+                      selectedNode?.id === node.id ? theme.accentFg : theme.ink,
+                  }}
+                >
+                  {Math.round(node.conditionalProbability * 100)}%
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCameraMode('overview')}
+                className="px-3 py-1 text-sm font-medium"
+                style={{ backgroundColor: theme.surface, color: theme.ink }}
+              >
+                Reset camera
+              </button>
+              <button
+                type="button"
+                onClick={() => setPureGardenView(false)}
+                className="px-3 py-1 text-sm font-semibold"
+                style={{ backgroundColor: theme.accent, color: theme.accentFg }}
+              >
+                Show guide
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SCROLL-DRIVEN 3D JOURNEY OVERLAYS (z-index 10, pointer-events-none on wrappers so 3D garden is clickable everywhere in open space) */}
       <div
         className={`relative z-10 w-full pointer-events-none transition-opacity duration-300 ${
-          pureGardenView ? 'opacity-0' : 'opacity-100'
+          pureGardenView
+            ? 'opacity-0 invisible [&_*]:!pointer-events-none'
+            : 'opacity-100'
         }`}
       >
-        {/* SECTION 1 (SCROLL 0.00): THE ORIGIN THRESHOLD — Open 230px top sanctuary vista on desktop so all 5 3D portals tower above */}
-        <section className="w-full pt-4 lg:pt-[220px] pb-14 md:pb-20 pointer-events-none">
+        {/* SECTION 1 (SCROLL 0.00): THE ORIGIN THRESHOLD — Open top sanctuary vista on desktop so all 5 3D portals tower above */}
+        <section
+          id="origin-threshold"
+          className="w-full pt-4 lg:pt-[220px] pb-14 md:pb-20 pointer-events-none"
+        >
           <div className="max-w-[1320px] mx-auto px-6 md:px-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
               {/* Left Column (Cols 1-5): Headline, Supporting Line, and Live Dilemma Bar */}
@@ -699,13 +777,13 @@ export default function ArtDirectionDemo({
               >
                 <div className="space-y-2.5">
                   <h1
-                    className={`${theme.displayFontClass} tracking-tight leading-[1.04] hv-motion-item hv-delay-1`}
+                    className={`${theme.displayFontClass} tracking-tight leading-[1.06] hv-motion-item hv-delay-1`}
                     style={{
-                      fontSize: 'clamp(30px, 4.3vw, 44px)',
+                      fontSize: 'clamp(28px, 4.4vw, 41px)',
                       color: theme.ink,
                     }}
                   >
-                    Walk the shape of your decision.
+                    {theme.headline}
                   </h1>
                   <p
                     className="text-base leading-relaxed hv-motion-item hv-delay-2"
@@ -808,7 +886,7 @@ export default function ArtDirectionDemo({
               {/* Right Column (Cols 7-12): Low-Profile Interactive Monolith Flight Strip */}
               <div
                 data-ui="true"
-                className="lg:col-span-6 lg:col-start-7 p-5 space-y-3.5 pointer-events-auto hv-motion-item hv-delay-2"
+                className="lg:col-span-6 lg:col-start-7 p-6 space-y-3.5 pointer-events-auto hv-motion-item hv-delay-2"
                 style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2 hv-motion-item hv-delay-3">
@@ -831,7 +909,7 @@ export default function ArtDirectionDemo({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 hv-motion-item hv-delay-4">
-                  {branchNodes.slice(0, 6).map((node) => {
+                  {branchNodes.slice(0, 10).map((node) => {
                     const isRec =
                       goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
                     const isSel = selectedNode?.id === node.id;
@@ -957,12 +1035,47 @@ export default function ArtDirectionDemo({
                       View full watershed
                     </button>
                   </div>
+
+                  {branchNodes.filter((n) => n.waveNumber > 1).length > 0 && (
+                    <div className="pt-2 space-y-1.5">
+                      <p className="text-sm font-medium" style={{ color: theme.mutedInk }}>
+                        Outer wave portals raised from reserve (click to fly):
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {branchNodes
+                          .filter((n) => n.waveNumber > 1)
+                          .map((node) => (
+                            <button
+                              key={node.id}
+                              type="button"
+                              onClick={() => handleFocusNode(node.id)}
+                              className="px-2.5 py-1 text-sm font-medium tabular-nums"
+                              style={{
+                                backgroundColor:
+                                  selectedNode?.id === node.id
+                                    ? theme.accent
+                                    : theme.ground,
+                                color:
+                                  selectedNode?.id === node.id
+                                    ? theme.accentFg
+                                    : theme.ink,
+                              }}
+                            >
+                              {Math.round(node.conditionalProbability * 100)}% ·{' '}
+                              {node.title.length > 20
+                                ? `${node.title.slice(0, 18)}…`
+                                : node.title}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Right Column (Cols 7-12): Alabaster Relief Plate 1 */}
               <figure
-                className="lg:col-span-6 lg:col-start-7 p-5 space-y-3 pointer-events-auto hv-motion-item hv-delay-4"
+                className="lg:col-span-6 lg:col-start-7 p-6 space-y-3 pointer-events-auto hv-motion-item hv-delay-4"
                 style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <img
@@ -1052,7 +1165,7 @@ export default function ArtDirectionDemo({
 
               {/* Right Column (Cols 7-12): Downstream Depth Recursion & Alabaster Relief Plate 2 */}
               <div
-                className="lg:col-span-6 lg:col-start-7 p-5 space-y-4 pointer-events-auto hv-motion-item hv-delay-6"
+                className="lg:col-span-6 lg:col-start-7 p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-6"
                 style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <div
@@ -1112,6 +1225,42 @@ export default function ArtDirectionDemo({
                       >
                         Branch with this move
                       </button>
+                    </div>
+                  )}
+
+                  {branchNodes.filter((n) => n.depth > 1).length > 0 && (
+                    <div className="pt-2 space-y-1.5">
+                      <p className="text-sm font-medium" style={{ color: theme.mutedInk }}>
+                        Downstream Depth {activeDepth} portals (click to fly into canyon):
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {branchNodes
+                          .filter((n) => n.depth > 1)
+                          .slice(0, 6)
+                          .map((node) => (
+                            <button
+                              key={node.id}
+                              type="button"
+                              onClick={() => handleFocusNode(node.id)}
+                              className="px-2.5 py-1 text-sm font-medium tabular-nums"
+                              style={{
+                                backgroundColor:
+                                  selectedNode?.id === node.id
+                                    ? theme.accent
+                                    : theme.ground,
+                                color:
+                                  selectedNode?.id === node.id
+                                    ? theme.accentFg
+                                    : theme.ink,
+                              }}
+                            >
+                              D{node.depth} · {Math.round(node.conditionalProbability * 100)}% ·{' '}
+                              {node.title.length > 18
+                                ? `${node.title.slice(0, 16)}…`
+                                : node.title}
+                            </button>
+                          ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1247,7 +1396,7 @@ export default function ArtDirectionDemo({
 
               {/* Right Column (Cols 7-12): Alabaster Relief Plates 3 & 4 + Studied Crossroads Links */}
               <div
-                className="lg:col-span-6 lg:col-start-7 p-5 space-y-5 pointer-events-auto hv-motion-item hv-delay-8"
+                className="lg:col-span-6 lg:col-start-7 p-6 space-y-5 pointer-events-auto hv-motion-item hv-delay-8"
                 style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
