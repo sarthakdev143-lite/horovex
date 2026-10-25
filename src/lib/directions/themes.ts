@@ -152,8 +152,8 @@ export const DIRECTION_THEMES: Record<ArtDirectionId, DirectionTheme> = {
       },
       {
         src: '/assets/darkroom-exhibit-2.png',
-        alt: 'Three architectural monoliths casting directional shadows across a dark gallery floor',
-        title: 'Mass and shadow',
+        alt: 'Three architectural monoliths casting directional shade across a dark gallery floor',
+        title: 'Mass and chiaroscuro',
         caption:
           'Stele height and footprint encode branch probability directly, while unchosen counterfactuals recede into gallery half-light.',
       },
@@ -169,7 +169,7 @@ export const DIRECTION_THEMES: Record<ArtDirectionId, DirectionTheme> = {
         alt: 'Close study of bronze and slate steles under directional key light',
         title: 'Real materials, zero glow',
         caption:
-          'Satin bronze, matte slate, and directional shadow replace decorative glass cards and sci-fi HUD chrome.',
+          'Satin bronze, matte slate, and directional chiaroscuro replace decorative glass cards and sci-fi HUD chrome.',
       },
     ],
   },

@@ -8,7 +8,7 @@ export default function LandingPage() {
     <Suspense
       fallback={
         <div
-          className="min-h-screen w-full flex items-center justify-center bg-[#F1F0EC] text-[#141413] text-base"
+          className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F1F0EC] text-[#141413] text-base"
         >
           Loading HOROVEX decision engine…
         </div>

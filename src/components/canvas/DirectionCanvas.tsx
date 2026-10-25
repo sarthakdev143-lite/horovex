@@ -19,7 +19,7 @@ export interface DirectionCanvasProps {
 }
 
 const DIRECTION_BG: Record<ArtDirectionId, string> = {
-  landscape: '#EAE8E3',
+  landscape: '#E6E2D8',
   instrument: '#EAEAE4',
   darkroom: '#0E1013',
 };
@@ -84,10 +84,10 @@ export default function DirectionCanvas({
         camera={{
           position:
             direction === 'landscape'
-              ? [0, 14.5, 16.5]
+              ? [0, 15.2, 16.0]
               : direction === 'instrument'
-              ? [0, 0, 15.5]
-              : [0, 4.6, 13.5],
+              ? [0, 0, 15.2]
+              : [0, 5.2, 12.6],
           fov: 42,
           near: 0.1,
           far: 200,

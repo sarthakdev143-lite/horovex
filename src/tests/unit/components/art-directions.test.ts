@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { DIRECTION_THEMES } from '@/lib/directions/themes';
 import { flagshipFounderSaaSPivot } from '@/tests/fixtures/mock-scenarios';
 import { solveGoldenPath } from '@/lib/math/bellman';
-import { perturbProbabilities } from '@/lib/math/sensitivity';
+import { computeWaveMass } from '@/lib/math/bayesian';
+import { perturbProbabilities, SliderDeltas } from '@/lib/math/sensitivity';
+import { generateDeterministicWave } from '@/lib/ai/adapter';
 
 describe('HOROVEX 3 Art Direction Demos: Themes & Live Engine Integration', () => {
   it('defines all 3 art directions (landscape, instrument, darkroom) with valid palettes and 4 raster plates each', () => {
@@ -55,5 +57,69 @@ describe('HOROVEX 3 Art Direction Demos: Themes & Live Engine Integration', () =
       sumCond += p || 0;
     }
     expect(sumCond).toBeCloseTo(0.8, 3);
+  });
+
+  it('prevents cumulative slider drift and conserves per-parent mass across Depth 1 and Depth 2 branches', () => {
+    const scenario = flagshipFounderSaaSPivot;
+    const depth1 = scenario.initialWave1.map((n) => ({ ...n }));
+    const baselineMap = new Map(depth1.map((n) => [n.id, n.conditionalProbability]));
+    const depth2 = generateDeterministicWave(
+      depth1[0].title,
+      1,
+      2,
+      depth1[0].id,
+      depth1[0].cumulativeProbability
+    );
+
+    const levers: SliderDeltas = {
+      executionVelocity: 0.6,
+      capitalBuffer: -0.3,
+      marketTailwind: 0.4,
+      skillPreparation: 0.2,
+    };
+
+    const pass1 = perturbProbabilities(
+      depth1.map((n) => ({ ...n, conditionalProbability: baselineMap.get(n.id)! })),
+      levers,
+      0.2
+    );
+    const pass2 = perturbProbabilities(
+      depth1.map((n) => ({ ...n, conditionalProbability: baselineMap.get(n.id)! })),
+      levers,
+      0.2
+    );
+
+    for (const n of depth1) {
+      expect(pass1.get(n.id)).toBe(pass2.get(n.id));
+    }
+
+    const d2Perturbed = perturbProbabilities(depth2, levers, 0.2);
+    const d1Sum = Array.from(pass1.values()).reduce((a, b) => a + b, 0);
+    const d2Sum = Array.from(d2Perturbed.values()).reduce((a, b) => a + b, 0);
+    expect(d1Sum).toBeCloseTo(0.8, 3);
+    expect(d2Sum).toBeCloseTo(0.8, 3);
+  });
+
+  it('allocates Wave 2 reserve mass and re-solves the recommended path when expanding +5 more futures', () => {
+    const scenario = flagshipFounderSaaSPivot;
+    const { deltaMass, remainingUnexplored } = computeWaveMass(2);
+    expect(deltaMass).toBeCloseTo(0.13, 4);
+    expect(remainingUnexplored).toBeCloseTo(0.07, 4);
+
+    const wave2 = generateDeterministicWave(
+      scenario.rootNode.title,
+      2,
+      1,
+      scenario.rootNode.id,
+      1.0
+    );
+    const allNodes = [scenario.rootNode, ...scenario.initialWave1, ...wave2];
+    const { goldenPathNodeIds } = solveGoldenPath(
+      allNodes,
+      scenario.rootNode.id,
+      scenario.recommendedTwin
+    );
+    expect(goldenPathNodeIds).toContain(scenario.rootNode.id);
+    expect(goldenPathNodeIds.length).toBe(2);
   });
 });
