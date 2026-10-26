@@ -1,0 +1,75 @@
+/* Scroll-linked storytelling motion for the HOROVEX folio.
+   Uses native scroll-driven animations where supported, so nothing is ever
+   hidden when the feature (or JavaScript) is unavailable. */
+
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: folioRise both linear;
+    animation-timeline: view();
+    animation-range: entry 4% entry 62%;
+  }
+
+  .revealLate {
+    animation-range: entry 14% entry 74%;
+  }
+}
+
+@keyframes folioRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 30px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* First-screen entrance: plays once, only for the hero. */
+.enter {
+  animation: folioEnter 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.enter-1 {
+  animation-delay: 60ms;
+}
+.enter-2 {
+  animation-delay: 150ms;
+}
+.enter-3 {
+  animation-delay: 240ms;
+}
+
+@keyframes folioEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .enter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Photographic grain over the world. A digital gradient this large bands;
+   a little tooth keeps the alabaster reading as material rather than paint. */
+.grain {
+  opacity: 0.2;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+

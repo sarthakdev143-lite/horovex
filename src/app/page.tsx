@@ -1,20 +1,20 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import ArtDirectionDemo from '@/components/directions/ArtDirectionDemo';
+import AlabasterStoryScroll from '@/components/directions/AlabasterStoryScroll';
 
 export default function LandingPage() {
   return (
     <Suspense
       fallback={
         <div
-          className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F1F0EC] text-[#161615] text-base"
+          className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F4F2ED] text-[#161615] text-base font-serif"
         >
-          Loading HOROVEX decision sanctuary…
+          Entering HOROVEX decision sanctuary…
         </div>
       }
     >
-      <ArtDirectionDemo initialDirection="sanctuary" />
+      <AlabasterStoryScroll />
     </Suspense>
   );
 }
