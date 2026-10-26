@@ -1,4 +1,4 @@
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it, expect } from 'vitest';
 import { DIRECTION_THEMES } from '@/lib/directions/themes';
@@ -135,4 +135,47 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(goldenPathNodeIds).toContain(scenario.rootNode.id);
     expect(goldenPathNodeIds.length).toBe(2);
   });
+
+  it('locks in the Sanctuary identity without theme switchers and enforces the 3-step UX and sculpted parabolic 3D arches', () => {
+    const landingSrc = readFileSync(
+      join(process.cwd(), 'src/components/directions/ArtDirectionDemo.tsx'),
+      'utf8'
+    );
+    const obsSrc = readFileSync(
+      join(process.cwd(), 'src/app/observatory/page.tsx'),
+      'utf8'
+    );
+    const sanctuary3DSrc = readFileSync(
+      join(
+        process.cwd(),
+        'src/components/canvas/directions/AlabasterSanctuary3D.tsx'
+      ),
+      'utf8'
+    );
+
+    // No theme switcher buttons on / or /observatory
+    expect(landingSrc).not.toContain('switch-direction-');
+    expect(obsSrc).not.toContain('Landscape 3D');
+    expect(obsSrc).not.toContain('Instrument 3D');
+    expect(obsSrc).not.toContain('Dark Room 3D');
+    expect(obsSrc).toContain('3D Sanctuary');
+    expect(obsSrc).toContain('Compare in Table');
+
+    // 3-step left-column structure & required testids on /
+    expect(landingSrc).toContain('id="step-decision"');
+    expect(landingSrc).toContain('id="step-futures"');
+    expect(landingSrc).toContain('id="step-mentor"');
+    expect(landingSrc).toContain('data-testid="simulate-btn"');
+    expect(landingSrc).toContain('data-testid="recurse-deeper-btn"');
+    expect(landingSrc).toContain('data-testid="expand-wave-btn"');
+
+    // Sculpted parabolic/catenary marble arches, 3-ring kinetic astrolabes, particle streams & colonnade
+    expect(sanctuary3DSrc).toContain('createParabolicArchCurve');
+    expect(sanctuary3DSrc).toContain('new THREE.TubeGeometry');
+    expect(sanctuary3DSrc).toContain('STREAM_PARTICLE_COUNT');
+    expect(sanctuary3DSrc).toContain('MOTE_PARTICLE_COUNT');
+    expect(sanctuary3DSrc).toContain('perimeterColonnade');
+    expect(sanctuary3DSrc).not.toContain('<boxGeometry');
+  });
 });
+
