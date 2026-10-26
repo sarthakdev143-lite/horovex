@@ -197,11 +197,21 @@ export default function ArtDirectionDemo({
         }),
       });
       const data = await res.json();
+      const customArchetypes = [
+        'Direct High-Conviction Commit',
+        'Staged Validation & Cushion',
+        'Hybrid Partnered Transition',
+        'Lean Asymmetric Experiment',
+        'Status-Quo Downside Trap',
+      ];
       const waveNodes: ProbabilityNode[] =
         data.nodes && data.nodes.length > 0
           ? data.nodes.map((n: ProbabilityNode, idx: number) => ({
               ...n,
-              title: `${cleanPrompt.slice(0, 28)} · Path ${idx + 1}`,
+              title: customArchetypes[idx] || n.title,
+              narrativeSummary: `Projected outcome for "${cleanPrompt}" under ${
+                customArchetypes[idx] || n.title
+              }.`,
             }))
           : generateDeterministicWave(cleanPrompt, 1, 1, rootId, 1.0);
 
@@ -718,12 +728,12 @@ export default function ArtDirectionDemo({
         {/* STEP 1 (FIRST SCREEN): ENTER YOUR DECISION */}
         <section
           id="step-decision"
-          className="w-full pt-5 lg:pt-12 pb-40 md:pb-52 lg:pb-64 pointer-events-none"
+          className="w-full scroll-mt-20 pt-5 lg:pt-10 pb-48 md:pb-60 lg:pb-80 pointer-events-none"
         >
           <div className="max-w-[1320px] mx-auto px-6 md:px-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               <div
-                className="lg:col-span-5 lg:max-w-[500px] p-5 sm:p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-1"
+                className="lg:col-span-5 lg:max-w-[460px] p-5 sm:p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-1"
                 style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <div className="space-y-2.5">
@@ -841,12 +851,12 @@ export default function ArtDirectionDemo({
         {/* STEP 2 (SCROLL MID-PAGE): EXPLORE YOUR 5 FUTURES & BRANCH DEEPER */}
         <section
           id="step-futures"
-          className="w-full py-16 md:py-24 pointer-events-none"
+          className="w-full scroll-mt-20 py-16 md:py-24 pointer-events-none"
         >
           <div className="max-w-[1320px] mx-auto px-6 md:px-10">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               <div
-                className="lg:col-span-5 lg:max-w-[500px] p-5 sm:p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-3"
+                className="lg:col-span-5 lg:max-w-[460px] p-5 sm:p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-3"
                 style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <div className="space-y-2">
@@ -989,12 +999,12 @@ export default function ArtDirectionDemo({
         {/* STEP 3 (SCROLL BOTTOM): YOUR RECOMMENDED PATH & "WHAT-IF" SLIDERS */}
         <section
           id="step-mentor"
-          className="w-full py-16 md:py-24 pointer-events-none"
+          className="w-full scroll-mt-20 pt-16 md:pt-24 pb-10 pointer-events-none"
         >
           <div className="max-w-[1320px] mx-auto px-6 md:px-10">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               <div
-                className="lg:col-span-5 lg:max-w-[500px] p-5 sm:p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-6"
+                className="lg:col-span-5 lg:max-w-[460px] p-5 sm:p-6 space-y-4 pointer-events-auto hv-motion-item hv-delay-6"
                 style={{ backgroundColor: theme.ground, color: theme.ink }}
               >
                 <h2
@@ -1127,21 +1137,33 @@ export default function ArtDirectionDemo({
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
 
-              {/* Right-Edge Frame Closure Anchor (Keeps right 7 columns completely open to 3D while closing the page frame margin) */}
-              <div className="hidden lg:flex lg:col-span-3 lg:col-start-10 flex-col items-end lg:pr-6 gap-2 pointer-events-auto hv-motion-item hv-delay-8">
+        {/* MINIMAL BOTTOM SANCTUARY FRAME BAR (Keeps Step 1-3 right columns 100% open while aligning page margins) */}
+        <footer className="w-full pb-6 pointer-events-none">
+          <div className="max-w-[1320px] mx-auto px-6 md:px-10">
+            <div
+              className="px-5 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 pointer-events-auto"
+              style={{ backgroundColor: theme.ground, color: theme.ink }}
+            >
+              <span className="text-sm font-medium" style={{ color: theme.mutedInk }}>
+                HOROVEX · Alabaster Decision Sanctuary
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setCameraMode('overview')}
-                  className="px-3.5 py-2 text-sm font-medium transition-transform active:scale-95"
-                  style={{ backgroundColor: theme.ground, color: theme.ink }}
+                  className="px-3 py-1.5 text-sm font-medium transition-transform active:scale-95"
+                  style={{ backgroundColor: theme.surface, color: theme.ink }}
                 >
                   View all 5 arches
                 </button>
                 <Link
                   href={simHref}
                   role="button"
-                  className="px-3.5 py-2 text-sm font-semibold transition-transform active:scale-95"
+                  className="px-3.5 py-1.5 text-sm font-semibold transition-transform active:scale-95"
                   style={{ backgroundColor: theme.accent, color: theme.accentFg }}
                 >
                   Open Full-Screen Simulator
@@ -1149,7 +1171,7 @@ export default function ArtDirectionDemo({
               </div>
             </div>
           </div>
-        </section>
+        </footer>
       </div>
     </div>
   );

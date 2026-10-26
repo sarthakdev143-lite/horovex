@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, Suspense } from 'react';
-import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import { useMultiverseStore } from '@/lib/state/useMultiverseStore';
@@ -15,8 +14,12 @@ import {
   flagshipSeniorTechSoloAI,
   flagshipGlobalRelocation,
 } from '@/tests/fixtures/mock-scenarios';
-import { DIRECTION_THEMES } from '@/components/directions/ArtDirectionDemo';
-import type { ArtDirectionId } from '@/components/canvas/DirectionCanvas';
+import ObservatoryHeader from '@/components/observatory/ObservatoryHeader';
+import ObservatoryControls from '@/components/observatory/ObservatoryControls';
+import MentorDrawer from '@/components/observatory/MentorDrawer';
+import SensitivityDrawer from '@/components/observatory/SensitivityDrawer';
+import FocusedStelePanel from '@/components/observatory/FocusedStelePanel';
+import ChronicleMatrixOverlay from '@/components/observatory/ChronicleMatrixOverlay';
 
 const DirectionCanvas = dynamic(
   () => import('@/components/canvas/DirectionCanvas'),
@@ -35,14 +38,12 @@ function ObservatoryInner() {
   const demoParam = searchParams.get('demo');
   const promptParam = searchParams.get('prompt');
 
-  const direction: ArtDirectionId = 'sanctuary';
-  const theme = DIRECTION_THEMES.sanctuary;
-
+  // Lock in Alabaster Sanctuary ground and ink colors
   useEffect(() => {
-    document.documentElement.style.backgroundColor = theme.ground;
-    document.body.style.backgroundColor = theme.ground;
-    document.body.style.color = theme.ink;
-  }, [theme]);
+    document.documentElement.style.backgroundColor = '#F4F2ED';
+    document.body.style.backgroundColor = '#F4F2ED';
+    document.body.style.color = '#161615';
+  }, []);
 
   const nodes = useMultiverseStore((state) => state.nodes);
   const selectedNodeId = useMultiverseStore((state) => state.selectedNodeId);
@@ -67,6 +68,9 @@ function ObservatoryInner() {
   const [activeViewMode, setActiveViewMode] = useState<'3d' | '2d'>('3d');
   const [cameraMode, setCameraMode] = useState<'scroll' | 'focus' | 'overview'>('overview');
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [isMentorOpen, setIsMentorOpen] = useState(false);
+  const [isSensitivityOpen, setIsSensitivityOpen] = useState(false);
+  const [isStelePanelDismissed, setIsStelePanelDismissed] = useState(false);
   const [interventionMove, setInterventionMove] = useState('');
   const [situationInput, setSituationInput] = useState('');
   const [isLoadingWave, setIsLoadingWave] = useState(false);
@@ -83,8 +87,10 @@ function ObservatoryInner() {
   const handleFocusPortal = (id: string) => {
     selectNode(id);
     setCameraMode('focus');
+    setIsStelePanelDismissed(false);
   };
 
+  // Load initial demo scenario or prompt
   useEffect(() => {
     let scenario = flagshipFounderSaaSPivot;
     if (demoParam === 'solo-ai' || demoParam === 'senior-tech-solo-ai') {
@@ -173,9 +179,22 @@ function ObservatoryInner() {
         }),
       });
       const waveData = await waveRes.json();
+      const customArchetypes = [
+        'Direct High-Conviction Commit',
+        'Staged Validation & Cushion',
+        'Hybrid Partnered Transition',
+        'Lean Asymmetric Experiment',
+        'Status-Quo Downside Trap',
+      ];
       const waveNodes: ProbabilityNode[] =
         waveData.nodes && waveData.nodes.length > 0
-          ? waveData.nodes
+          ? waveData.nodes.map((n: ProbabilityNode, idx: number) => ({
+              ...n,
+              title: customArchetypes[idx] || n.title,
+              narrativeSummary: `Projected outcome for "${situation}" under ${
+                customArchetypes[idx] || n.title
+              }.`,
+            }))
           : generateDeterministicWave(situation, 1, 1, rootId, 1.0);
 
       const nodeMap: Record<string, ProbabilityNode> = { [rootId]: rootNode };
@@ -194,6 +213,7 @@ function ObservatoryInner() {
         unexploredMass: 0.2,
       });
       selectNode(waveNodes[0]?.id || rootId);
+      setIsStelePanelDismissed(false);
       setCameraMode('focus');
 
       const { goldenPathNodeIds: solved } = solveGoldenPath(
@@ -219,6 +239,7 @@ function ObservatoryInner() {
         unexploredMass: 0.2,
       });
       selectNode(fallback[0]?.id || rootId);
+      setIsStelePanelDismissed(false);
       setCameraMode('focus');
     } finally {
       setIsLoadingWave(false);
@@ -262,6 +283,7 @@ function ObservatoryInner() {
       });
       if (added[0]) {
         selectNode(added[0].id);
+        setIsStelePanelDismissed(false);
         setCameraMode('focus');
       }
 
@@ -289,6 +311,7 @@ function ObservatoryInner() {
       });
       if (fallback[0]) {
         selectNode(fallback[0].id);
+        setIsStelePanelDismissed(false);
         setCameraMode('focus');
       }
     } finally {
@@ -334,6 +357,7 @@ function ObservatoryInner() {
       addNodes(childNodes);
       useMultiverseStore.setState({ activeDepth: nextDepth });
       selectNode(childNodes[0]?.id || targetNode.id);
+      setIsStelePanelDismissed(false);
       setCameraMode('focus');
 
       const allNodes = Object.values(useMultiverseStore.getState().nodes);
@@ -450,442 +474,111 @@ function ObservatoryInner() {
 
   return (
     <main
-      className="min-h-[100dvh] w-full tabular-nums"
-      style={{ backgroundColor: theme.ground, color: theme.ink }}
+      className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-[#F4F2ED] text-[#161615] select-none"
     >
-      {/* Top App Bar */}
-      <header
-        data-testid="top-chronometer-bar"
-        className="w-full px-6 py-3 flex flex-wrap items-center justify-between gap-4"
-        style={{ backgroundColor: theme.surface, color: theme.ink }}
+      {/* 1. FULL-SCREEN 3D SANCTUARY STAGE */}
+      <div
+        className="fixed inset-0 w-full h-[100dvh] z-0"
+        role="region"
+        aria-label="3D Sanctuary stage"
       >
-        <div className="flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-lg font-semibold"
-            style={{ color: theme.ink }}
-          >
-            HOROVEX
-          </Link>
-          <h1 className="text-xl font-semibold" style={{ color: theme.ink }}>
-            {rootNode?.title || 'Alabaster Decision Sanctuary'}
-          </h1>
-          <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
-            Depth {activeDepth || 1} · Wave {maxWaveNumber || 1}
-          </span>
-        </div>
-
-        {/* Locked Sanctuary View Switcher: Only 3D Sanctuary & Compare in Table */}
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveViewMode('3d')}
-            className="px-3.5 py-1.5 text-sm font-semibold"
-            style={{
-              backgroundColor: activeViewMode === '3d' ? theme.accent : theme.ground,
-              color: activeViewMode === '3d' ? theme.accentFg : theme.ink,
-            }}
-          >
-            3D Sanctuary
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveViewMode('2d')}
-            className="px-3.5 py-1.5 text-sm font-medium"
-            style={{
-              backgroundColor: activeViewMode === '2d' ? theme.accent : theme.ground,
-              color: activeViewMode === '2d' ? theme.accentFg : theme.ink,
-            }}
-          >
-            Compare in Table
-          </button>
-        </div>
-      </header>
-
-      {/* Main Spatial Sanctuary Workspace */}
-      <div className="w-full px-6 py-4 space-y-5">
-        {/* DOMINANT FULL-WIDTH 3D ALABASTER SANCTUARY HERO STAGE */}
-        {activeViewMode === '3d' && (
-          <div className="w-full" style={{ backgroundColor: theme.surface }}>
-            {/* Stage Camera Header Bar */}
-            <div
-              className="px-4 py-2.5 flex flex-wrap items-center justify-between gap-3"
-              style={{ backgroundColor: theme.surfaceAlt }}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold" style={{ color: theme.ink }}>
-                  Fly camera to future:
-                </span>
-                {[...branchNodes]
-                  .sort((a, b) => {
-                    const aActive = a.depth === (activeDepth || 1) ? 1 : 0;
-                    const bActive = b.depth === (activeDepth || 1) ? 1 : 0;
-                    if (aActive !== bActive) return bActive - aActive;
-                    return b.conditionalProbability - a.conditionalProbability;
-                  })
-                  .slice(0, 10)
-                  .map((node) => {
-                    const isRec =
-                      goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
-                    const isSel = selectedNode?.id === node.id && cameraMode === 'focus';
-                    return (
-                      <button
-                        key={node.id}
-                        type="button"
-                        onClick={() => handleFocusPortal(node.id)}
-                        className="px-2.5 py-1 text-sm font-medium tabular-nums"
-                        style={{
-                          backgroundColor: isRec
-                            ? theme.accent
-                            : isSel
-                            ? theme.ink
-                            : theme.ground,
-                          color: isRec
-                            ? theme.accentFg
-                            : isSel
-                            ? theme.ground
-                            : theme.ink,
-                        }}
-                      >
-                        {node.depth > 1 ? `D${node.depth} · ` : ''}
-                        {Math.round(node.conditionalProbability * 100)}% ·{' '}
-                        {node.title.length > 22 ? `${node.title.slice(0, 20)}…` : node.title}
-                      </button>
-                    );
-                  })}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCameraMode('overview')}
-                  className="px-3 py-1 text-sm font-medium"
-                  style={{ backgroundColor: theme.ground, color: theme.ink }}
-                >
-                  Reset Camera
-                </button>
-              </div>
-            </div>
-
-            {/* Full-Width 3D WebGL Sanctuary Stage */}
-            <div className="w-full min-h-[540px] lg:min-h-[620px] h-[70dvh] relative overflow-hidden">
-              <DirectionCanvas
-                direction={direction}
-                nodes={nodeList}
-                selectedNodeId={selectedNode?.id || null}
-                goldenPathIds={goldenPathNodeIds}
-                onSelectNode={handleFocusPortal}
-                cameraMode={cameraMode}
-                className="w-full h-full"
-              />
-            </div>
-
-            {/* Stage Action & Dilemma Bar */}
-            <div
-              className="p-3.5 flex flex-wrap items-center justify-between gap-3"
-              style={{ backgroundColor: theme.surfaceAlt }}
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleHorizontalExpand}
-                  disabled={isLoadingWave}
-                  className="px-3.5 py-2 text-sm font-semibold"
-                  style={{ backgroundColor: theme.accent, color: theme.accentFg }}
-                >
-                  +5 more possibilities
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleVerticalRecursion()}
-                  disabled={isLoadingWave || !selectedNodeId}
-                  className="px-3.5 py-2 text-sm font-medium"
-                  style={{ backgroundColor: theme.ground, color: theme.ink }}
-                >
-                  See what happens next
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsActionModalOpen((prev) => !prev)}
-                  className="px-3.5 py-2 text-sm font-medium"
-                  style={{ backgroundColor: theme.ground, color: theme.ink }}
-                >
-                  What if I…
-                </button>
-              </div>
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (situationInput.trim()) {
-                    generateInitialWave(situationInput.trim());
-                  }
-                }}
-                className="flex flex-col sm:flex-row w-full sm:w-auto flex-1 max-w-md items-stretch sm:items-center gap-2"
-              >
-                <input
-                  type="text"
-                  value={situationInput}
-                  onChange={(e) => setSituationInput(e.target.value)}
-                  placeholder="Simulate another real-life crossroads..."
-                  className="flex-1 px-3 py-1.5 text-sm focus:outline-none"
-                  style={{ backgroundColor: theme.ground, color: theme.ink }}
-                />
-                <button
-                  type="submit"
-                  disabled={isLoadingWave}
-                  className="px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap"
-                  style={{ backgroundColor: theme.accent, color: theme.accentFg }}
-                >
-                  {isLoadingWave ? 'Simulating…' : 'Predict 5 Futures'}
-                </button>
-              </form>
-
-              <span className="text-sm tabular-nums" style={{ color: theme.ink }}>
-                Explored: {Math.round((1 - unexploredMass) * 100)}% · Unexplored:{' '}
-                {Math.round(unexploredMass * 100)}%
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Action Injection Inline Panel */}
-        {isActionModalOpen && (
-          <div className="p-4 space-y-3" style={{ backgroundColor: theme.surface }}>
-            <p className="text-base font-semibold" style={{ color: theme.ink }}>
-              Condition next wave on a specific move
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2.5">
-              <input
-                type="text"
-                value={interventionMove}
-                onChange={(e) => setInterventionMove(e.target.value)}
-                placeholder="Describe your move (e.g. require 50% upfront payment)..."
-                className="flex-1 px-3.5 py-2 text-sm"
-                style={{ backgroundColor: theme.ground, color: theme.ink }}
-              />
-              <button
-                type="button"
-                onClick={() => handleVerticalRecursion(interventionMove)}
-                className="px-4 py-2 text-sm font-semibold"
-                style={{ backgroundColor: theme.accent, color: theme.accentFg }}
-              >
-                Branch with this move
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Synchronized Strategic Mentor, Sensitivity Levers, and Branch Probability Workbench */}
-        <div className="w-full p-5 space-y-5" style={{ backgroundColor: theme.surface }}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-            {/* Left Column (7 cols): Branch Probability Table & Recommended Path */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                  Simulated futures comparison table
-                </h2>
-                <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
-                  {branchNodes.length} branches · Click any row to fly camera
-                </span>
-              </div>
-
-              <div className="overflow-x-auto" style={{ backgroundColor: theme.ground }}>
-                <table className="w-full text-left border-collapse tabular-nums">
-                  <thead>
-                    <tr style={{ backgroundColor: theme.surfaceAlt }}>
-                      <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
-                        Future Outcome
-                      </th>
-                      <th className="py-2.5 px-3.5 text-sm font-semibold" style={{ color: theme.ink }}>
-                        Horizon
-                      </th>
-                      <th
-                        className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                        style={{ color: theme.ink }}
-                      >
-                        Reversibility
-                      </th>
-                      <th
-                        className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                        style={{ color: theme.ink }}
-                      >
-                        Cumulative
-                      </th>
-                      <th
-                        className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                        style={{ color: theme.ink }}
-                      >
-                        Likelihood
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {branchNodes.map((node) => {
-                      const isRec =
-                        goldenPathNodeIds.includes(node.id) || Boolean(node.isGoldenPath);
-                      const isSel = selectedNode?.id === node.id;
-                      return (
-                        <tr
-                          key={node.id}
-                          onClick={() => handleFocusPortal(node.id)}
-                          className="cursor-pointer"
-                          style={{
-                            backgroundColor: isSel ? theme.surfaceAlt : theme.ground,
-                          }}
-                        >
-                          <td className="py-2.5 px-3.5 text-sm font-medium" style={{ color: theme.ink }}>
-                            {node.title}
-                            {isRec ? ' (Recommended)' : ''}
-                          </td>
-                          <td className="py-2.5 px-3.5 text-sm" style={{ color: theme.mutedInk }}>
-                            {node.timeHorizon}
-                          </td>
-                          <td
-                            className="py-2.5 px-3.5 text-sm text-right tabular-nums"
-                            style={{ color: theme.ink }}
-                          >
-                            {node.reversibilityScore.toFixed(1)}
-                          </td>
-                          <td
-                            className="py-2.5 px-3.5 text-sm text-right tabular-nums"
-                            style={{ color: theme.ink }}
-                          >
-                            {(node.cumulativeProbability * 100).toFixed(1)}%
-                          </td>
-                          <td
-                            className="py-2.5 px-3.5 text-sm font-semibold text-right tabular-nums"
-                            style={{ color: isRec ? theme.accent : theme.ink }}
-                          >
-                            {(node.conditionalProbability * 100).toFixed(1)}%
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {recommendedNode && (
-                <div className="p-4 space-y-1.5" style={{ backgroundColor: theme.ground }}>
-                  <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                    Recommended path: {recommendedNode.title}
-                  </h2>
-                  <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
-                    Prioritize {recommendedNode.title} at{' '}
-                    {Math.round(recommendedNode.conditionalProbability * 100)}% likelihood. Lock
-                    annual prepay terms in the first 14 days and monitor warning sign:{' '}
-                    {recommendedNode.tripwires?.[0] || 'Signed pilot within 45 days'}.
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Right Column (5 cols): Focused Arch Inspector & What-If Sliders */}
-            <div className="lg:col-span-5 space-y-4">
-              {selectedNode && (
-                <div className="p-4 space-y-2.5" style={{ backgroundColor: theme.ground }}>
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                      {selectedNode.title}
-                    </h2>
-                    <span
-                      className="text-base font-semibold tabular-nums"
-                      style={{ color: theme.accent }}
-                    >
-                      {(selectedNode.conditionalProbability * 100).toFixed(1)}%
-                    </span>
-                  </div>
-
-                  <p className="text-sm leading-relaxed" style={{ color: theme.ink }}>
-                    {selectedNode.narrativeSummary ||
-                      'Selected trajectory arch in the sanctuary.'}
-                  </p>
-
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                    <span className="text-sm tabular-nums" style={{ color: theme.mutedInk }}>
-                      Cumulative: {(selectedNode.cumulativeProbability * 100).toFixed(1)}% ·
-                      Reversibility: {selectedNode.reversibilityScore.toFixed(1)}/10
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => collapseWavefunction(selectedNode.id)}
-                      className="px-3 py-1.5 text-sm font-semibold"
-                      style={{ backgroundColor: theme.accent, color: theme.accentFg }}
-                    >
-                      Mark what actually happened
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className="p-4 space-y-3" style={{ backgroundColor: theme.ground }}>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-semibold" style={{ color: theme.ink }}>
-                    What-if sliders
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => applyLeverVector(ZERO_LEVERS)}
-                    className="px-2.5 py-1 text-sm font-medium"
-                    style={{ backgroundColor: theme.surface, color: theme.ink }}
-                  >
-                    Reset sliders
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {[
-                    {
-                      key: 'executionVelocity' as keyof SliderDeltas,
-                      label: 'Execution & shipping speed',
-                    },
-                    {
-                      key: 'capitalBuffer' as keyof SliderDeltas,
-                      label: 'Cash runway buffer',
-                    },
-                    {
-                      key: 'marketTailwind' as keyof SliderDeltas,
-                      label: 'Market demand tailwinds',
-                    },
-                    {
-                      key: 'skillPreparation' as keyof SliderDeltas,
-                      label: 'Team technical readiness',
-                    },
-                  ].map((lever) => {
-                    const val = sensitivityLevers[lever.key];
-                    const pct = Math.round(val * 100);
-                    return (
-                      <div key={lever.key} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <label htmlFor={`obs-${lever.key}`} style={{ color: theme.ink }}>
-                            {lever.label}
-                          </label>
-                          <span className="font-semibold tabular-nums" style={{ color: theme.ink }}>
-                            {pct > 0 ? `+${pct}%` : `${pct}%`}
-                          </span>
-                        </div>
-                        <input
-                          id={`obs-${lever.key}`}
-                          type="range"
-                          min="-1"
-                          max="1"
-                          step="0.05"
-                          value={val}
-                          onChange={(e) =>
-                            handleLeverChange(lever.key, parseFloat(e.target.value))
-                          }
-                          className="w-full h-2 cursor-pointer"
-                          style={{ accentColor: theme.accent }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DirectionCanvas
+          direction="sanctuary"
+          nodes={nodeList}
+          selectedNodeId={selectedNode?.id || null}
+          goldenPathIds={goldenPathNodeIds}
+          onSelectNode={handleFocusPortal}
+          cameraMode={cameraMode}
+          levers={sensitivityLevers}
+          className="w-full h-full"
+        />
       </div>
+
+      {/* 2. MINIMAL TOP APP BAR */}
+      <ObservatoryHeader
+        rootNodeTitle={rootNode?.title || 'Alabaster Decision Sanctuary'}
+        activeDepth={activeDepth || 1}
+        maxWaveNumber={maxWaveNumber || 1}
+        activeViewMode={activeViewMode}
+        onToggleViewMode={(mode) => setActiveViewMode(mode)}
+        isMentorOpen={isMentorOpen}
+        onToggleMentor={() => setIsMentorOpen((prev) => !prev)}
+        isSensitivityOpen={isSensitivityOpen}
+        onToggleSensitivity={() => setIsSensitivityOpen((prev) => !prev)}
+        branchNodes={branchNodes}
+        selectedNodeId={selectedNode?.id}
+        onFocusPortal={handleFocusPortal}
+        onResetCamera={() => setCameraMode('overview')}
+        goldenPathNodeIds={goldenPathNodeIds}
+      />
+
+      {/* 3. FLOATING BOTTOM ACTION BAR */}
+      {activeViewMode === '3d' && (
+        <ObservatoryControls
+          isLoadingWave={isLoadingWave}
+          unexploredMass={unexploredMass}
+          situationInput={situationInput}
+          onSituationInputChange={setSituationInput}
+          onSubmitSituation={generateInitialWave}
+          onExpandWave={handleHorizontalExpand}
+          onRecurseDeeper={() => handleVerticalRecursion()}
+          hasSelectedNode={Boolean(selectedNodeId)}
+          isActionModalOpen={isActionModalOpen}
+          onToggleActionModal={() => setIsActionModalOpen((prev) => !prev)}
+          interventionMove={interventionMove}
+          onInterventionMoveChange={setInterventionMove}
+          onSubmitIntervention={handleVerticalRecursion}
+        />
+      )}
+
+      {/* 4. SLIDE-OVER SENSITIVITY SLIDERS DRAWER (LEFT) */}
+      <SensitivityDrawer
+        isOpen={isSensitivityOpen}
+        onClose={() => setIsSensitivityOpen(false)}
+        sensitivityLevers={sensitivityLevers}
+        onLeverChange={handleLeverChange}
+        onResetLevers={() => applyLeverVector(ZERO_LEVERS)}
+      />
+
+      {/* 5. SLIDE-OVER STRATEGIC MENTOR GUIDANCE DRAWER (RIGHT) */}
+      <MentorDrawer
+        isOpen={isMentorOpen}
+        onClose={() => setIsMentorOpen(false)}
+        recommendedNode={recommendedNode}
+        userContextTwin={userContextTwin}
+      />
+
+      {/* 6. FOCUSED STELE FLOATING PANEL */}
+      {activeViewMode === '3d' &&
+        selectedNode &&
+        selectedNode.parentId !== null &&
+        !isStelePanelDismissed &&
+        !isMentorOpen && (
+          <FocusedStelePanel
+            node={selectedNode}
+            isGoldenPath={
+              goldenPathNodeIds.includes(selectedNode.id) || Boolean(selectedNode.isGoldenPath)
+            }
+            onCollapse={(id) => collapseWavefunction(id)}
+            onRecurseDeeper={() => handleVerticalRecursion()}
+            onClose={() => setIsStelePanelDismissed(true)}
+            isLoading={isLoadingWave}
+          />
+        )}
+
+      {/* 7. 2D CHRONICLE MATRIX FULL-VIEWPORT OVERLAY */}
+      {activeViewMode === '2d' && (
+        <div role="region" aria-label="Compare in Table">
+          <ChronicleMatrixOverlay
+            nodes={nodeList}
+            goldenPathNodeIds={goldenPathNodeIds}
+            selectedNodeId={selectedNode?.id}
+            onSelectNode={handleFocusPortal}
+            onCollapse={(id) => collapseWavefunction(id)}
+            onClose={() => setActiveViewMode('3d')}
+          />
+        </div>
+      )}
     </main>
   );
 }
@@ -894,7 +587,7 @@ export default function ObservatoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#F1F0EC] text-[#161615] text-base">
+        <div className="fixed inset-0 w-full h-[100dvh] flex items-center justify-center bg-[#F4F2ED] text-[#161615] text-base">
           Loading HOROVEX Sanctuary…
         </div>
       }

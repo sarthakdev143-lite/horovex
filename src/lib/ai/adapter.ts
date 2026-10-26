@@ -44,6 +44,15 @@ export function generateDeterministicWave(
   const isTailRisk = waveNumber >= 3;
   const prefix = isTailRisk ? 'Tail-Risk' : isContrarian ? 'Contrarian' : 'Baseline';
 
+  const confidenceProfile = [0.4, 0.3, 0.15, 0.1, 0.05];
+  const sensitivityProfiles = [
+    { executionVelocity: 0.45, capitalBuffer: 0.15, marketTailwind: 0.3, skillPreparation: 0.25 },
+    { executionVelocity: 0.3, capitalBuffer: -0.25, marketTailwind: 0.45, skillPreparation: 0.15 },
+    { executionVelocity: 0.1, capitalBuffer: 0.45, marketTailwind: 0.15, skillPreparation: 0.2 },
+    { executionVelocity: -0.15, capitalBuffer: 0.3, marketTailwind: -0.1, skillPreparation: 0.35 },
+    { executionVelocity: -0.4, capitalBuffer: -0.35, marketTailwind: -0.25, skillPreparation: -0.2 },
+  ];
+
   const rawNodes: ProbabilityNode[] = Array.from({ length: 5 }, (_, idx) => {
     const siblingIndex = (waveNumber - 1) * 5 + idx + 1;
     const parentPath = parentId ? `root.n${depth}_${siblingIndex}` : 'root';
@@ -72,39 +81,47 @@ export function generateDeterministicWave(
       summaryHeadline: `Plausible ${prefix.toLowerCase()} projection at depth ${depth}`,
       narrativeSummary: `Context-aware deterministic simulation projection for: ${situation}`,
       timeHorizon: `${3 * depth}-${6 * depth} Months`,
-      conditionalProbability: 0.16,
-      cumulativeProbability: 0.16,
-      rawLlmConfidence: Number((0.85 - idx * 0.12).toFixed(2)),
+      conditionalProbability: confidenceProfile[idx] ?? 0.16,
+      cumulativeProbability: confidenceProfile[idx] ?? 0.16,
+      rawLlmConfidence: confidenceProfile[idx] ?? 0.2,
       unexploredChildMass: 0.20,
       causalDrivers: ['Market adoption rate', 'Execution velocity', 'Capital buffer'],
       reversibilityType: idx % 2 === 0 ? 'type_2_reversible' : 'type_1_irreversible',
-      reversibilityScore: 5.0 + idx * 0.7,
-      regretMinimizationScore: 6.0 + idx * 0.5,
+      reversibilityScore: Number((8.2 - idx * 0.9).toFixed(1)),
+      regretMinimizationScore: Number((8.5 - idx * 0.8).toFixed(1)),
       impactVector: {
-        wealth: 4.0 + idx * 1.0,
-        autonomy: 5.0 - idx * 0.5,
-        mastery: 6.0 + idx * 0.5,
-        stability: 7.0 - idx * 0.8,
-        impact: 5.5 + idx * 0.6,
-        peace: 6.0 - idx * 0.4,
+        wealth: Number((7.5 - idx * 0.8).toFixed(1)),
+        autonomy: Number((8.0 - idx * 0.9).toFixed(1)),
+        mastery: Number((7.2 - idx * 0.4).toFixed(1)),
+        stability: Number((7.8 - idx * 1.1).toFixed(1)),
+        impact: Number((7.4 - idx * 0.6).toFixed(1)),
+        peace: Number((7.6 - idx * 1.0).toFixed(1)),
       },
-      expectedUtilityScore: 6.5 + idx * 0.4,
+      expectedUtilityScore: Number((8.2 - idx * 0.6).toFixed(1)),
       isGoldenPath: siblingIndex === 1,
       status: 'active',
       userInterventionPrompt,
       spatialPosition: { x: 0, y: 0, z: 0 },
-      sensitivityWeights: {
-        executionVelocity: 0.35,
-        capitalBuffer: 0.25,
-        marketTailwind: 0.2,
-        skillPreparation: 0.2,
-      },
+      sensitivityWeights: sensitivityProfiles[idx] ?? sensitivityProfiles[0],
       tripwires: [`Checkpoint milestone ${siblingIndex} verified in 60 days`],
       createdAt: new Date().toISOString(),
     };
   });
 
-  const normalized = normalizeWaveProbabilities(rawNodes, waveNumber);
+  const normalizedBase = normalizeWaveProbabilities(rawNodes, waveNumber);
+  const waveScale =
+    waveNumber === 1
+      ? 1.0
+      : waveNumber === 2
+      ? 0.13 / 0.93
+      : 0.042 / 0.972;
+
+  const normalized = normalizedBase.map((n, idx) => ({
+    ...n,
+    siblingIndex: (waveNumber - 1) * 5 + idx + 1,
+    conditionalProbability: Number((n.conditionalProbability * waveScale).toFixed(4)),
+  }));
+
   const withCum = normalized.map((n) => ({
     ...n,
     cumulativeProbability: computeCumulativeProbability(parentCumProb, n.conditionalProbability),
