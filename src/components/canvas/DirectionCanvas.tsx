@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ProbabilityNode } from '@/lib/types/multiverse';
+import { SliderDeltas } from '@/lib/math/sensitivity';
 import AlabasterSanctuary3D from './directions/AlabasterSanctuary3D';
 import ProbabilityLandscape3D from './directions/ProbabilityLandscape3D';
 import HorologyInstrument3D from './directions/HorologyInstrument3D';
@@ -13,12 +14,16 @@ export type ArtDirectionId = 'sanctuary' | 'landscape' | 'instrument' | 'darkroo
 export interface DirectionCanvasProps {
   direction: ArtDirectionId;
   nodes: ProbabilityNode[];
-  selectedNodeId: string | null;
-  goldenPathIds: string[];
-  onSelectNode: (id: string) => void;
+  selectedNodeId?: string | null;
+  focusedNodeId?: string | null;
+  goldenPathIds?: string[];
+  recommendedPathNodeIds?: string[];
+  onSelectNode?: (id: string) => void;
+  onNodeSelect?: (node: ProbabilityNode) => void;
+  levers?: SliderDeltas;
   className?: string;
   scrollProgress?: number;
-  cameraMode?: 'scroll' | 'focus' | 'overview';
+  cameraMode?: 'scroll' | 'focus' | 'overview' | 'fly';
 }
 
 const DIRECTION_BG: Record<ArtDirectionId, string> = {
@@ -32,8 +37,12 @@ export default function DirectionCanvas({
   direction,
   nodes,
   selectedNodeId,
-  goldenPathIds,
+  focusedNodeId,
+  goldenPathIds = [],
+  recommendedPathNodeIds,
   onSelectNode,
+  onNodeSelect,
+  levers,
   className = 'w-full h-full relative',
   scrollProgress = 0,
   cameraMode = 'scroll',
@@ -65,6 +74,26 @@ export default function DirectionCanvas({
   }, []);
 
   const bgHex = DIRECTION_BG[direction] || '#ECEBE6';
+
+  const activeSelectedId =
+    focusedNodeId !== undefined ? focusedNodeId : selectedNodeId ?? null;
+  const activeGoldenPath =
+    recommendedPathNodeIds !== undefined
+      ? recommendedPathNodeIds
+      : goldenPathIds ?? [];
+
+  const handleSelectNode = (id: string) => {
+    if (onSelectNode) onSelectNode(id);
+    if (onNodeSelect) {
+      const found = nodes.find((n) => n.id === id);
+      if (found) onNodeSelect(found);
+    }
+  };
+
+  const handleNodeSelect = (node: ProbabilityNode) => {
+    if (onNodeSelect) onNodeSelect(node);
+    if (onSelectNode) onSelectNode(node.id);
+  };
 
   if (!mounted || !webglSupported) {
     return (
@@ -112,9 +141,13 @@ export default function DirectionCanvas({
           {direction === 'sanctuary' && (
             <AlabasterSanctuary3D
               nodes={nodes}
-              selectedNodeId={selectedNodeId}
-              goldenPathIds={goldenPathIds}
-              onSelectNode={onSelectNode}
+              selectedNodeId={activeSelectedId}
+              focusedNodeId={activeSelectedId}
+              goldenPathIds={activeGoldenPath}
+              recommendedPathNodeIds={activeGoldenPath}
+              onSelectNode={handleSelectNode}
+              onNodeSelect={handleNodeSelect}
+              levers={levers}
               reducedMotion={reducedMotion}
               scrollProgress={scrollProgress}
               cameraMode={cameraMode}
@@ -123,27 +156,27 @@ export default function DirectionCanvas({
           {direction === 'landscape' && (
             <ProbabilityLandscape3D
               nodes={nodes}
-              selectedNodeId={selectedNodeId}
-              goldenPathIds={goldenPathIds}
-              onSelectNode={onSelectNode}
+              selectedNodeId={activeSelectedId}
+              goldenPathIds={activeGoldenPath}
+              onSelectNode={handleSelectNode}
               reducedMotion={reducedMotion}
             />
           )}
           {direction === 'instrument' && (
             <HorologyInstrument3D
               nodes={nodes}
-              selectedNodeId={selectedNodeId}
-              goldenPathIds={goldenPathIds}
-              onSelectNode={onSelectNode}
+              selectedNodeId={activeSelectedId}
+              goldenPathIds={activeGoldenPath}
+              onSelectNode={handleSelectNode}
               reducedMotion={reducedMotion}
             />
           )}
           {direction === 'darkroom' && (
             <DarkRoomExhibit3D
               nodes={nodes}
-              selectedNodeId={selectedNodeId}
-              goldenPathIds={goldenPathIds}
-              onSelectNode={onSelectNode}
+              selectedNodeId={activeSelectedId}
+              goldenPathIds={activeGoldenPath}
+              onSelectNode={handleSelectNode}
               reducedMotion={reducedMotion}
             />
           )}

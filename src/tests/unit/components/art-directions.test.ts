@@ -126,6 +126,27 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
       scenario.rootNode.id,
       1.0
     );
+    expect(wave2[0].siblingIndex).toBe(6);
+    expect(wave2[4].siblingIndex).toBe(10);
+    const wave2Sum = wave2.reduce((acc, n) => acc + n.conditionalProbability, 0);
+    expect(wave2Sum).toBeCloseTo(0.13, 3);
+
+    // Verify generated wave nodes have distinct sensitivity weights so What-If sliders reshape probabilities
+    const perturbedGenerated = perturbProbabilities(
+      wave2,
+      {
+        executionVelocity: 0.8,
+        capitalBuffer: -0.4,
+        marketTailwind: 0.5,
+        skillPreparation: 0,
+      },
+      1 - wave2Sum
+    );
+    expect(perturbedGenerated.get(wave2[0].id)).not.toBeCloseTo(
+      wave2[0].conditionalProbability,
+      3
+    );
+
     const allNodes = [scenario.rootNode, ...scenario.initialWave1, ...wave2];
     const { goldenPathNodeIds } = solveGoldenPath(
       allNodes,
@@ -136,7 +157,7 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(goldenPathNodeIds.length).toBe(2);
   });
 
-  it('locks in the Sanctuary identity without theme switchers and enforces the 3-step UX and sculpted parabolic 3D arches', () => {
+  it('locks in the Sanctuary identity without theme switchers, 3-step UX, and architectural stone monoliths', () => {
     const landingSrc = readFileSync(
       join(process.cwd(), 'src/components/directions/ArtDirectionDemo.tsx'),
       'utf8'
@@ -169,13 +190,11 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(landingSrc).toContain('data-testid="recurse-deeper-btn"');
     expect(landingSrc).toContain('data-testid="expand-wave-btn"');
 
-    // Sculpted parabolic/catenary marble arches, 3-ring kinetic astrolabes, particle streams & colonnade
-    expect(sanctuary3DSrc).toContain('createParabolicArchCurve');
-    expect(sanctuary3DSrc).toContain('new THREE.TubeGeometry');
-    expect(sanctuary3DSrc).toContain('STREAM_PARTICLE_COUNT');
-    expect(sanctuary3DSrc).toContain('MOTE_PARTICLE_COUNT');
-    expect(sanctuary3DSrc).toContain('perimeterColonnade');
-    expect(sanctuary3DSrc).not.toContain('<boxGeometry');
+    // Architectural stone monoliths, water basin, colonnade fins, and stream data
+    expect(sanctuary3DSrc).toContain('ArchitecturalStoneMonolith');
+    expect(sanctuary3DSrc).toContain('colonnadeFins');
+    expect(sanctuary3DSrc).toContain('streamData');
+    expect(sanctuary3DSrc).toContain('AlabasterSanctuary3D');
   });
 
   it('enforces unboxed scroll-driven storytelling on / with AlabasterStoryScroll (Acts I-V and zero theme switchers)', () => {
@@ -225,3 +244,5 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(scrollStorySrc).toContain('V');
   });
 });
+
+
