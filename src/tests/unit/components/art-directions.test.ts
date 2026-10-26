@@ -177,5 +177,51 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(sanctuary3DSrc).toContain('perimeterColonnade');
     expect(sanctuary3DSrc).not.toContain('<boxGeometry');
   });
-});
 
+  it('enforces unboxed scroll-driven storytelling on / with AlabasterStoryScroll (Acts I-V and zero theme switchers)', () => {
+    const scrollStorySrc = readFileSync(
+      join(process.cwd(), 'src/components/directions/AlabasterStoryScroll.tsx'),
+      'utf8'
+    );
+    const pageSrc = readFileSync(
+      join(process.cwd(), 'src/app/page.tsx'),
+      'utf8'
+    );
+
+    // page.tsx renders AlabasterStoryScroll
+    expect(pageSrc).toContain('AlabasterStoryScroll');
+
+    // No theme switcher buttons or secondary theme triggers
+    expect(scrollStorySrc).not.toContain('switch-direction-');
+    expect(scrollStorySrc).not.toContain('Landscape 3D');
+    expect(scrollStorySrc).not.toContain('Instrument 3D');
+    expect(scrollStorySrc).not.toContain('Dark Room 3D');
+
+    // Acts I–IV anchors and editorial headlines
+    expect(scrollStorySrc).toContain('id="step-decision"');
+    expect(scrollStorySrc).toContain('Every decision splits your world in five.');
+    expect(scrollStorySrc).toContain('id="step-futures"');
+    expect(scrollStorySrc).toContain('Five futures rise from the water.');
+    expect(scrollStorySrc).toContain('Every outcome becomes a new origin.');
+    expect(scrollStorySrc).toContain('id="step-mentor"');
+    expect(scrollStorySrc).toContain('One recommended path illuminated.');
+
+    // Act V threshold input, CTA, flagship pills, and compatibility testids
+    expect(scrollStorySrc).toContain('Enter your crossroads.');
+    expect(scrollStorySrc).toContain('data-testid="simulate-btn"');
+    expect(scrollStorySrc).toContain('data-testid="recurse-deeper-btn"');
+    expect(scrollStorySrc).toContain('data-testid="expand-wave-btn"');
+    expect(scrollStorySrc).toContain('/observatory?demo=saas-pivot');
+    expect(scrollStorySrc).toContain('/observatory?demo=solo-ai');
+    expect(scrollStorySrc).toContain('/observatory?demo=relocation');
+
+    // Minimal header with HOROVEX wordmark, chapter indicators, and Start Now CTA
+    expect(scrollStorySrc).toContain('HOROVEX');
+    expect(scrollStorySrc).toContain('Start Now');
+    expect(scrollStorySrc).toContain('I');
+    expect(scrollStorySrc).toContain('II');
+    expect(scrollStorySrc).toContain('III');
+    expect(scrollStorySrc).toContain('IV');
+    expect(scrollStorySrc).toContain('V');
+  });
+});
