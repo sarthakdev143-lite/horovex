@@ -41,7 +41,9 @@ future-predictor/
 │   │   ├── layout.tsx                 # Root layout with fonts, metadata, providers
 │   │   ├── page.tsx                   # Luxury 3D Hero Landing & Curated Flagship Showcases
 │   │   ├── observatory/
-│   │   │   └── page.tsx               # Full-screen 3D Causal Observatory workspace
+│   │   │   └── page.tsx               # Full-screen 3D Alabaster Sanctuary workspace
+│   │   ├── demos/
+│   │   │   └── [direction]/page.tsx   # Interactive art-direction demo route
 │   │   └── api/
 │   │       └── simulations/
 │   │           ├── calibrate/route.ts       # Adaptive Clarifying Pulse API
@@ -50,6 +52,9 @@ future-predictor/
 │   │           └── [id]/collapse/route.ts   # Wavefunction Collapse API
 │   ├── components/
 │   │   ├── canvas/
+│   │   │   ├── DirectionCanvas.tsx    # Art-direction router (sanctuary/landscape/instrument/darkroom)
+│   │   │   ├── LightTreeCanvas.tsx    # Landing scroll-story filament canvas
+│   │   │   ├── directions/            # Per-direction 3D scenes (AlabasterSanctuary3D, …)
 │   │   │   ├── MultiverseCanvas.tsx   # R3F Canvas wrapper with client-only dynamic loading
 │   │   │   ├── MultiverseScene.tsx    # Scene manager, lights, environment, camera controls
 │   │   │   ├── ProbabilityFilament.tsx# Custom spline filaments with bioluminescent pulses
@@ -64,6 +69,8 @@ future-predictor/
 │   │   │   ├── DigitalTwinModal.tsx   # Personal Context Twin vault editor
 │   │   │   ├── RealityCheckInModal.tsx# Wavefunction collapse dialogue
 │   │   │   └── ChronicleMatrixView.tsx# Synchronized 2D matrix comparison overlay
+│   │   ├── observatory/               # Sanctuary HUD (header, controls, drawers, matrix overlay)
+│   │   │   ├── directions/                # Landing story scroll + art-direction demos
 │   │   ├── landing/
 │   │   │   ├── LuxuryHeroSection.tsx  # 3D orbital chronometry hero
 │   │   │   ├── FlagshipDemoShowcase.tsx # 3 curated showcase multiverse cards
@@ -156,6 +163,7 @@ Every feature identified during the authoritative survey is cataloged and assign
 | M3 | Strategic Mentor Engine & Golden Path Solver | Implement Digital Twin vault, Multi-Objective Utility $U(n)$, Bellman Expected Utility solver, Golden Path tracer in `#D4AF37`, Strategic Advisory HUD, 14-Day Playbook, Tripwires, and 3 Flagship Demos | M2 | DONE |
 | M4 | Sensitivity Levers, Wavefunction Collapse & Dual Persistence | Implement 60 FPS Softmax logit levers, Reality Check-In wavefunction collapse, Multi-Provider AI adapter + deterministic fallback engine, Supabase SQL schema + Guest Sandbox, 2D Chronicle Matrix, and Dossier Export | M3 | DONE |
 | M5 | Final Milestone: Full E2E Test Pass & Adversarial Hardening | Phase 1: Pass 100% of E2E Test Suite (Tiers 1-4). Phase 2: Tier 5 Adversarial Coverage Hardening with Challenger -> Worker -> Reviewer loop | M4, TEST_READY.md | DONE |
+| M6 | Alabaster Sanctuary Evolution (post-M5) | Light-tree scroll story, sanctuary HUD extraction, observatory camera/type calibration; supersedes Obsidian `#050507` surfaces on `/` + `/observatory` (see horovex-art-direction gate) | M5 | IN PROGRESS |
 
 ---
 

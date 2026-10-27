@@ -5,12 +5,12 @@
 | :--- | :--- |
 | **Track** | E2E Testing Track (Dual Track Architecture) |
 | **Status** | **VERIFIED & READY (100% Pass Rate)** |
-| **Test Suites** | 19 Vitest Test Files + 1 Playwright Browser E2E File |
-| **Total Automated Tests** | **223 Vitest Tests Passed** + **11 Browser E2E Specs Passed** (234 Total) |
+| **Test Suites** | 23 Vitest Test Files + 1 Playwright Browser E2E File |
+| **Total Automated Tests** | **251 Vitest Tests Passed** + **11 Browser E2E Specs Passed** (262 Total) |
 | **TypeScript Typecheck** | `npx tsc --noEmit` exited with code 0 (zero errors) |
 | **Test Command** | `npm test` (`vitest run`), `npm run test:e2e` (`playwright test`) |
 | **Memory Footprint** | Heap usage < 150 MB (within 250 MB budget) |
-| **Execution Duration** | Vitest: ~31s, Playwright: ~58s |
+| **Execution Duration** | Vitest: ~122s, Playwright: ~58s |
 
 ---
 
@@ -116,7 +116,11 @@ src/tests/
 │       ├── design-tokens.test.ts            # 5 passed tests (Feature 1: Tier 1)
 │       ├── matrix-view.test.ts              # 5 passed tests (Feature 5: Tier 1)
 │       ├── a11y.test.ts                     # 5 passed tests (Feature 6: Tier 1)
-│       └── dossier-export.test.ts           # 5 passed tests (Feature 30: Tier 1)
+│       ├── dossier-export.test.ts           # 5 passed tests (Feature 30: Tier 1)
+│       ├── art-directions.test.ts           # Art-direction contract + palette invariants
+│       ├── sanctuary-stress.test.ts         # Sanctuary geometry + camera stress harness
+│       ├── sanctuary-m1-stress.test.ts      # M1 sanctuary stress (no floating Html, keyframes)
+│       └── sanctuary-m2-challenge.test.ts   # M2 sanctuary challenge suite
 ├── integration/
 │   ├── api-routes.test.ts                   # 11 passed tests (Features 7, 8, 9, 10, 11, 27, 28: Tier 1 & Tier 3)
 │   ├── pairwise-interactions.test.ts        # 5 passed tests (Tier 3: Pairwise cascades & state transitions)
@@ -131,9 +135,9 @@ src/tests/
 
 ## 4. Test Verification Summary
 
-- **Total Automated Vitest Tests**: 223 tests across 19 test files (100% green)
+- **Total Automated Vitest Tests**: 251 tests across 23 test files (100% green)
 - **Total Browser E2E Specs**: 11 specs across 1 Playwright suite (100% green)
-- **Overall Pass Rate**: **100% (234 / 234 passed)**
+- **Overall Pass Rate**: **100% (262 / 262 passed)**
 - **Failed Tests**: **0**
 - **Skipped / Todo**: **0**
 - **TypeScript Strict Mode**: Zero errors (`npx tsc --noEmit` clean exit)
