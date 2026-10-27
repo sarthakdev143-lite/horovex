@@ -119,7 +119,7 @@ export default function DirectionCanvas({
         camera={{
           position:
             direction === 'sanctuary'
-              ? [0, 5.2, 12.5]
+              ? [0, 4.8, 9.8]
               : direction === 'landscape'
               ? [0, 15.2, 16.0]
               : direction === 'instrument'
