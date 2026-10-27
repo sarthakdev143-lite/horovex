@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowUpRight, Compass, Sparkles, Orbit, Sliders, Shield, ChevronRight } from "lucide-react";
@@ -23,6 +24,19 @@ export default function LandingPage() {
     });
     useMultiverseStore.getState().setNodes(demoNodes);
     useMultiverseStore.getState().setGoldenPath(scenario.expectedGoldenPathIds);
+  }, []);
+  // Commit the decorative hero canvas teardown synchronously on navigation
+  // intent, before the route transition starts. Unmounting the R3F root
+  // inside the transition races React 19 concurrent rendering (removeChild
+  // crash, dropped client nav).
+  const [heroAlive, setHeroAlive] = useState(true);
+  useEffect(() => {
+    const disarmHero = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest?.('a[href^="/observatory"]');
+      if (anchor) flushSync(() => setHeroAlive(false));
+    };
+    document.addEventListener("click", disarmHero, true);
+    return () => document.removeEventListener("click", disarmHero, true);
   }, []);
   const flagshipDemos = [
     {
@@ -64,7 +78,11 @@ export default function LandingPage() {
     <div className="relative min-h-screen bg-obsidian-vignette flex flex-col justify-between overflow-hidden">
       {/* 3D WebGL Background Canvas in Hero */}
       <div className="absolute inset-x-0 top-0 h-[800px] z-0 opacity-40 pointer-events-none overflow-hidden">
-        <MultiverseCanvas interactive={false} className="w-full h-full relative min-h-[600px] pointer-events-none" />
+        {heroAlive ? (
+          <MultiverseCanvas interactive={false} className="w-full h-full relative min-h-[600px] pointer-events-none" />
+        ) : (
+          <div className="w-full h-full relative min-h-[600px] bg-[#050507]" aria-hidden="true" />
+        )}
       </div>
       {/* 1. Precision Luxury Top Navigation */}
       <header className="sticky top-0 z-50 w-full border-b border-white/[0.07] bg-[#050507]/80 backdrop-blur-xl">
