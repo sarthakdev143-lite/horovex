@@ -65,11 +65,11 @@ export default function ChronicleMatrixOverlay({
               <h2 className="text-xl sm:text-2xl font-semibold text-[#161615]">
                 2D Chronicle Matrix
               </h2>
-              <span className="text-xs px-2 py-0.5 rounded bg-[#E5E1D8] text-[#4A4844] tabular-nums">
+              <span className="text-[13px] px-2 py-0.5 rounded bg-[#E5E1D8] text-[#4A4844] tabular-nums">
                 {branchNodes.length} Futures Synchronized
               </span>
             </div>
-            <p className="text-xs text-[#4A4844] mt-1">
+            <p className="text-[13px] text-[#4A4844] mt-1">
               Synchronized cross-outcome comparison · Total probability mass conserved (\sum P_i = 1 - M_unexplored)
             </p>
           </div>
@@ -79,7 +79,7 @@ export default function ChronicleMatrixOverlay({
             <select
               value={filterRegime}
               onChange={(e) => setFilterRegime(e.target.value)}
-              className="px-2.5 py-1.5 text-xs text-[#161615] bg-[#E5E1D8] border border-[#DCD8CE] rounded focus:outline-none"
+              className="px-2.5 py-1.5 text-[13px] text-[#161615] bg-[#E5E1D8] border border-[#DCD8CE] rounded focus:outline-none"
             >
               <option value="all">All Waves</option>
               <option value="wave1">Wave 1 Baseline</option>
@@ -92,7 +92,7 @@ export default function ChronicleMatrixOverlay({
               <button
                 type="button"
                 onClick={() => setSortBy('probability')}
-                className="px-2.5 py-1 text-xs font-medium transition-colors"
+                className="px-2.5 py-1 text-[13px] font-medium transition-colors"
                 style={{
                   backgroundColor: sortBy === 'probability' ? '#163A50' : 'transparent',
                   color: sortBy === 'probability' ? '#FFFFFF' : '#161615',
@@ -103,7 +103,7 @@ export default function ChronicleMatrixOverlay({
               <button
                 type="button"
                 onClick={() => setSortBy('reversibility')}
-                className="px-2.5 py-1 text-xs font-medium transition-colors"
+                className="px-2.5 py-1 text-[13px] font-medium transition-colors"
                 style={{
                   backgroundColor: sortBy === 'reversibility' ? '#163A50' : 'transparent',
                   color: sortBy === 'reversibility' ? '#FFFFFF' : '#161615',
@@ -114,7 +114,7 @@ export default function ChronicleMatrixOverlay({
               <button
                 type="button"
                 onClick={() => setSortBy('title')}
-                className="px-2.5 py-1 text-xs font-medium transition-colors"
+                className="px-2.5 py-1 text-[13px] font-medium transition-colors"
                 style={{
                   backgroundColor: sortBy === 'title' ? '#163A50' : 'transparent',
                   color: sortBy === 'title' ? '#FFFFFF' : '#161615',
@@ -128,7 +128,7 @@ export default function ChronicleMatrixOverlay({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-1.5 text-xs font-semibold rounded bg-[#163A50] text-white hover:opacity-90 transition-opacity"
+              className="px-3.5 py-1.5 text-[13px] font-semibold rounded bg-[#163A50] text-white hover:opacity-90 transition-opacity"
             >
               Return to 3D Sanctuary
             </button>
@@ -137,7 +137,7 @@ export default function ChronicleMatrixOverlay({
 
         {/* Matrix Table */}
         <div className="overflow-x-auto rounded-lg bg-[#E5E1D8] border border-[#DCD8CE]">
-          <table className="w-full text-left border-collapse tabular-nums text-xs">
+          <table className="w-full text-left border-collapse tabular-nums text-[13px]">
             <thead>
               <tr className="bg-[#DCD8CE] text-[#161615]">
                 <th className="py-2.5 px-3.5 font-semibold">Future Trajectory</th>
@@ -220,7 +220,7 @@ export default function ChronicleMatrixOverlay({
             <h3 className="text-sm font-semibold text-[#161615]">
               Recommended Trajectory: {recommendedNode.title}
             </h3>
-            <p className="text-xs text-[#161615] leading-relaxed">
+            <p className="text-[13px] text-[#161615] leading-relaxed">
               Prioritize {recommendedNode.title} at{' '}
               {Math.round(recommendedNode.conditionalProbability * 100)}% likelihood. Key sentinel metric:{' '}
               {recommendedNode.tripwires?.[0] || 'Signed pilot or validation within 45 days'}.

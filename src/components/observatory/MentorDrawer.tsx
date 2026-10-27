@@ -43,14 +43,14 @@ export default function MentorDrawer({
             <h2 className="text-base font-semibold text-[#161615]">
               Strategic Mentor Advisory
             </h2>
-            <p className="text-xs text-[#4A4844]">
+            <p className="text-[13px] text-[#4A4844]">
               Bellman Expected Utility & 10-Year Regret Minimization
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-xs text-[#4A4844] hover:text-[#161615] rounded"
+            className="p-1 text-[13px] text-[#4A4844] hover:text-[#161615] rounded"
             aria-label="Close mentor drawer"
           >
             ✕
@@ -62,21 +62,21 @@ export default function MentorDrawer({
             {/* Executive Verdict */}
             <div className="p-3.5 rounded-lg bg-[#E5E1D8] border border-[#DCD8CE] space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#163A50] uppercase tracking-wider">
+                <span className="text-[13px] font-semibold text-[#163A50] uppercase tracking-wider">
                   Executive Verdict
                 </span>
-                <span className="text-xs font-semibold tabular-nums text-[#163A50]">
+                <span className="text-[13px] font-semibold tabular-nums text-[#163A50]">
                   {Math.round(recommendedNode.conditionalProbability * 100)}% Likelihood
                 </span>
               </div>
               <h3 className="text-sm font-semibold text-[#161615]">
                 {recommendedNode.title}
               </h3>
-              <p className="text-xs text-[#161615] leading-relaxed">
+              <p className="text-[13px] text-[#161615] leading-relaxed">
                 {recommendedNode.narrativeSummary ||
                   'The Bellman solver evaluates this path as having the optimal balance of expected upside, reversibility, and capital runway preservation.'}
               </p>
-              <div className="pt-1 flex flex-wrap gap-2 text-xs tabular-nums text-[#4A4844]">
+              <div className="pt-1 flex flex-wrap gap-2 text-[13px] tabular-nums text-[#4A4844]">
                 <span>Cumulative: {Math.round(recommendedNode.cumulativeProbability * 100)}%</span>
                 <span>·</span>
                 <span>Reversibility: {recommendedNode.reversibilityScore.toFixed(1)}/10</span>
@@ -87,10 +87,10 @@ export default function MentorDrawer({
 
             {/* 14-Day Action Playbook */}
             <div className="p-3.5 rounded-lg bg-[#E5E1D8] border border-[#DCD8CE] space-y-2.5">
-              <h4 className="text-xs font-semibold text-[#161615] uppercase tracking-wider">
+              <h4 className="text-[13px] font-semibold text-[#161615] uppercase tracking-wider">
                 14-Day Action Playbook
               </h4>
-              <ul className="text-xs text-[#161615] space-y-2">
+              <ul className="text-[13px] text-[#161615] space-y-2">
                 <li className="flex items-start gap-2">
                   <span className="font-semibold tabular-nums text-[#163A50]">Days 1–3:</span>
                   <span>Validate initial counterparty appetite and draft upfront terms.</span>
@@ -108,10 +108,10 @@ export default function MentorDrawer({
 
             {/* 30/60/90-Day Tripwires */}
             <div className="p-3.5 rounded-lg bg-[#E5E1D8] border border-[#DCD8CE] space-y-2">
-              <h4 className="text-xs font-semibold text-[#161615] uppercase tracking-wider">
+              <h4 className="text-[13px] font-semibold text-[#161615] uppercase tracking-wider">
                 30 / 60 / 90-Day Tripwires
               </h4>
-              <div className="space-y-1.5 text-xs text-[#161615]">
+              <div className="space-y-1.5 text-[13px] text-[#161615]">
                 <div className="flex items-start gap-2">
                   <span className="font-semibold tabular-nums text-[#163A50]">30d:</span>
                   <span>
@@ -135,16 +135,16 @@ export default function MentorDrawer({
 
             {/* Pre-Mortem & Blindspots */}
             <div className="p-3.5 rounded-lg bg-[#E5E1D8] border border-[#DCD8CE] space-y-1.5">
-              <h4 className="text-xs font-semibold text-[#161615] uppercase tracking-wider">
+              <h4 className="text-[13px] font-semibold text-[#161615] uppercase tracking-wider">
                 Pre-Mortem Hedge
               </h4>
-              <p className="text-xs text-[#4A4844] leading-relaxed">
+              <p className="text-[13px] text-[#4A4844] leading-relaxed">
                 Key vulnerability: Over-indexing on enterprise customization before standardizing core features. Hedge by enforcing a strict 80/20 product boundary.
               </p>
             </div>
           </>
         ) : (
-          <div className="p-4 rounded bg-[#E5E1D8] text-xs text-[#4A4844]">
+          <div className="p-4 rounded bg-[#E5E1D8] text-[13px] text-[#4A4844]">
             Select or generate a future branch to inspect the Mentor recommendations.
           </div>
         )}
@@ -156,7 +156,7 @@ export default function MentorDrawer({
           <button
             type="button"
             onClick={handleCopyBrief}
-            className="w-full py-2 px-3 text-xs font-semibold rounded bg-[#163A50] text-white hover:opacity-90 transition-opacity"
+            className="w-full py-2 px-3 text-[13px] font-semibold rounded bg-[#163A50] text-white hover:opacity-90 transition-opacity"
           >
             {copied ? 'Copied to Clipboard!' : 'Copy Decision Brief'}
           </button>

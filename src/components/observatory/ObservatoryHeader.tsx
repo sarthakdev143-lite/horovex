@@ -55,7 +55,7 @@ export default function ObservatoryHeader({
           <h1 className="text-sm sm:text-base font-semibold text-[#161615] truncate max-w-[200px] sm:max-w-xs md:max-w-md">
             {rootNodeTitle}
           </h1>
-          <span className="text-xs text-[#4A4844] tabular-nums block">
+          <span className="text-[13px] text-[#4A4844] tabular-nums block">
             Depth {activeDepth || 1} · Wave {maxWaveNumber || 1}
           </span>
         </div>
@@ -72,7 +72,7 @@ export default function ObservatoryHeader({
               key={node.id}
               type="button"
               onClick={() => onFocusPortal(node.id)}
-              className="px-2 py-0.5 text-xs font-medium tabular-nums rounded transition-colors whitespace-nowrap"
+              className="px-2 py-0.5 text-[13px] font-medium tabular-nums rounded transition-colors whitespace-nowrap"
               style={{
                 backgroundColor: isRec
                   ? '#163A50'
@@ -95,7 +95,7 @@ export default function ObservatoryHeader({
         <button
           type="button"
           onClick={onResetCamera}
-          className="hidden md:inline-flex px-2.5 py-1.5 text-xs font-medium text-[#161615] bg-[#F4F2ED] rounded hover:bg-[#DCD8CE] transition-colors"
+          className="hidden md:inline-flex px-2.5 py-1.5 text-[13px] font-medium text-[#161615] bg-[#F4F2ED] rounded hover:bg-[#DCD8CE] transition-colors"
           title="Reset 3D camera to wide overview"
         >
           Reset Camera
@@ -104,7 +104,7 @@ export default function ObservatoryHeader({
         <button
           type="button"
           onClick={onToggleSensitivity}
-          className="px-3 py-1.5 text-xs font-semibold rounded transition-colors"
+          className="px-3 py-1.5 text-[13px] font-semibold rounded transition-colors"
           style={{
             backgroundColor: isSensitivityOpen ? '#163A50' : '#F4F2ED',
             color: isSensitivityOpen ? '#FFFFFF' : '#161615',
@@ -117,7 +117,7 @@ export default function ObservatoryHeader({
         <button
           type="button"
           onClick={onToggleMentor}
-          className="px-3 py-1.5 text-xs font-semibold rounded transition-colors"
+          className="px-3 py-1.5 text-[13px] font-semibold rounded transition-colors"
           style={{
             backgroundColor: isMentorOpen ? '#163A50' : '#F4F2ED',
             color: isMentorOpen ? '#FFFFFF' : '#161615',
@@ -131,7 +131,7 @@ export default function ObservatoryHeader({
           <button
             type="button"
             onClick={() => onToggleViewMode('3d')}
-            className="px-2.5 py-1.5 text-xs font-semibold transition-colors"
+            className="px-2.5 py-1.5 text-[13px] font-semibold transition-colors"
             style={{
               backgroundColor: activeViewMode === '3d' ? '#163A50' : '#F4F2ED',
               color: activeViewMode === '3d' ? '#FFFFFF' : '#161615',
@@ -142,7 +142,7 @@ export default function ObservatoryHeader({
           <button
             type="button"
             onClick={() => onToggleViewMode('2d')}
-            className="px-2.5 py-1.5 text-xs font-medium transition-colors"
+            className="px-2.5 py-1.5 text-[13px] font-medium transition-colors"
             style={{
               backgroundColor: activeViewMode === '2d' ? '#163A50' : '#F4F2ED',
               color: activeViewMode === '2d' ? '#FFFFFF' : '#161615',
