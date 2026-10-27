@@ -15,17 +15,17 @@
 
 import { test, expect } from '@playwright/test';
 
-test.describe('Feature 2: Alabaster Scroll Story Landing Experience', () => {
+test.describe('Feature 2: Sanctuary Garden Landing Experience', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to landing page
     await page.goto('/');
   });
 
-  test('F2-E2E-01: renders HOROVEX brand and scroll-story headline', async ({ page }) => {
-    const brandTitle = page.locator('header a[aria-label="HOROVEX Home"]').first();
-    await expect(brandTitle).toBeVisible();
+  test('F2-E2E-01: renders HOROVEX brand and garden headline', async ({ page }) => {
+    const brandTitle = page.locator('header a[href="/"]').first();
+    await expect(brandTitle).toContainText('HOROVEX');
 
-    const subtitle = page.locator('text=Every decision splits your world in five.').first();
+    const subtitle = page.locator('text=See where your next decision leads.').first();
     await expect(subtitle).toBeVisible();
   });
 
@@ -40,34 +40,30 @@ test.describe('Feature 2: Alabaster Scroll Story Landing Experience', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('F2-E2E-03: renders 3 flagship scenario entry links', async ({ page }) => {
-    const founderCard = page.locator('a[href="/observatory?demo=saas-pivot"]').first();
-    const techSoloCard = page.locator('a[href="/observatory?demo=solo-ai"]').first();
-    const relocationCard = page.locator('a[href="/observatory?demo=relocation"]').first();
+  test('F2-E2E-03: renders 3 flagship scenario entry buttons', async ({ page }) => {
+    const founderCard = page.locator('text=Pivot SaaS to Enterprise').first();
+    const techSoloCard = page.locator('text=Leave Big Tech for Solo AI').first();
+    const relocationCard = page.locator('text=San Francisco vs. Dubai').first();
 
     await expect(founderCard).toBeVisible();
     await expect(techSoloCard).toBeVisible();
     await expect(relocationCard).toBeVisible();
   });
 
-  test('F2-E2E-04: submitting a dilemma navigates to observatory workspace', async ({ page }) => {
-    const dilemmaButton = page.locator('text=Try a dilemma').first();
-    await expect(dilemmaButton).toBeVisible();
-    await dilemmaButton.click();
-    const dilemmaInput = page.locator('#threshold-input');
-    await expect(dilemmaInput).toBeVisible();
-    await dilemmaInput.fill('Pivot SaaS to enterprise or stay self-serve?');
-    await page.getByTestId('simulate-btn').click();
+  test('F2-E2E-04: clicking "Open Full Simulator" button navigates to observatory workspace', async ({ page }) => {
+    const launchButton = page.getByTestId('launch-observatory-btn').first();
+    await expect(launchButton).toBeVisible();
+    await launchButton.click();
     await expect(page).toHaveURL(/.*observatory.*/, { timeout: 15000 });
   });
 
-  test('F2-E2E-05: clicking a flagship showcase card pre-populates and opens observatory', async ({ page }) => {
-    const exploreLink = page.locator('a[href*="/observatory?demo="]').first();
-    if (await exploreLink.isVisible()) {
-      await exploreLink.click();
-      // Should transition to active simulation
-      await expect(page).toHaveURL(/.*observatory.*/, { timeout: 15000 });
-    }
+  test('F2-E2E-05: submitting a dilemma populates 5 futures in the garden', async ({ page }) => {
+    const dilemmaInput = page.locator('#dilemma-input');
+    await expect(dilemmaInput).toBeVisible();
+    await dilemmaInput.fill('Pivot SaaS to enterprise or stay self-serve?');
+    await page.getByTestId('simulate-btn').click();
+    await expect(page.locator('#step-futures').getByText('Direct High-Conviction Commit').first()).toBeVisible({ timeout: 20000 });
+    await expect(page).toHaveURL('http://localhost:3000/');
   });
 });
 
@@ -78,7 +74,8 @@ test.describe('Feature 3, 4, 12, 13: 3D Multiverse Observatory & Interactive Con
 
   test('F3-E2E-01: mounts full-screen WebGL 3D Causal Observatory viewport', async ({ page }) => {
     const observatoryCanvas = page.locator('canvas').first();
-    await expect(observatoryCanvas).toBeVisible();
+    // Software-GL shader compile under parallel workers can exceed 5s
+    await expect(observatoryCanvas).toBeVisible({ timeout: 20000 });
 
     // Telemetry HUD bar should be visible at top
     const topBar = page.getByTestId('top-chronometer-bar').first();
