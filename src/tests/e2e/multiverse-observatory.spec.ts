@@ -15,17 +15,17 @@
 
 import { test, expect } from '@playwright/test';
 
-test.describe('Feature 2: Luxury 3D Hero Landing Experience', () => {
+test.describe('Feature 2: Alabaster Scroll Story Landing Experience', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to landing page
     await page.goto('/');
   });
 
-  test('F2-E2E-01: renders Obsidian Chronometry luxury brand header and headline', async ({ page }) => {
-    const brandTitle = page.locator('text=HOROVEX').first();
+  test('F2-E2E-01: renders HOROVEX brand and scroll-story headline', async ({ page }) => {
+    const brandTitle = page.locator('header a[aria-label="HOROVEX Home"]').first();
     await expect(brandTitle).toBeVisible();
 
-    const subtitle = page.locator('text=Precision Chronometric').first();
+    const subtitle = page.locator('text=Every decision splits your world in five.').first();
     await expect(subtitle).toBeVisible();
   });
 
@@ -40,20 +40,24 @@ test.describe('Feature 2: Luxury 3D Hero Landing Experience', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('F2-E2E-03: renders 3 curated flagship showcase multiverse cards', async ({ page }) => {
-    const founderCard = page.locator('text=Founder Crossroads').first();
-    const techSoloCard = page.locator('text=Executive Career').first();
-    const relocationCard = page.locator('text=Sovereign Lifestyle').first();
+  test('F2-E2E-03: renders 3 flagship scenario entry links', async ({ page }) => {
+    const founderCard = page.locator('a[href="/observatory?demo=saas-pivot"]').first();
+    const techSoloCard = page.locator('a[href="/observatory?demo=solo-ai"]').first();
+    const relocationCard = page.locator('a[href="/observatory?demo=relocation"]').first();
 
     await expect(founderCard).toBeVisible();
     await expect(techSoloCard).toBeVisible();
     await expect(relocationCard).toBeVisible();
   });
 
-  test('F2-E2E-04: clicking "Enter Causal Observatory" button navigates to observatory workspace', async ({ page }) => {
-    const launchButton = page.getByTestId('launch-observatory-btn').or(page.locator('a[href="/observatory"]')).first();
-    await expect(launchButton).toBeVisible();
-    await launchButton.click();
+  test('F2-E2E-04: submitting a dilemma navigates to observatory workspace', async ({ page }) => {
+    const dilemmaButton = page.locator('text=Try a dilemma').first();
+    await expect(dilemmaButton).toBeVisible();
+    await dilemmaButton.click();
+    const dilemmaInput = page.locator('#threshold-input');
+    await expect(dilemmaInput).toBeVisible();
+    await dilemmaInput.fill('Pivot SaaS to enterprise or stay self-serve?');
+    await page.getByTestId('simulate-btn').click();
     await expect(page).toHaveURL(/.*observatory.*/, { timeout: 15000 });
   });
 
