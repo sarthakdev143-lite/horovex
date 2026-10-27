@@ -62,7 +62,7 @@ export default function ObservatoryControls({
             <button
               type="button"
               onClick={onToggleActionModal}
-              className="text-xs text-[#4A4844] hover:text-[#161615]"
+              className="text-[13px] text-[#4A4844] hover:text-[#161615]"
             >
               Close
             </button>
@@ -73,12 +73,12 @@ export default function ObservatoryControls({
               value={interventionMove}
               onChange={(e) => onInterventionMoveChange(e.target.value)}
               placeholder="Describe your intervention move (e.g. require 50% upfront payment)..."
-              className="flex-1 px-3 py-1.5 text-xs text-[#161615] bg-[#E5E1D8] border border-[#DCD8CE] rounded focus:outline-none"
+              className="flex-1 px-3 py-1.5 text-[13px] text-[#161615] bg-[#E5E1D8] border border-[#DCD8CE] rounded focus:outline-none"
             />
             <button
               type="submit"
               disabled={isLoadingWave || !interventionMove.trim()}
-              className="px-3.5 py-1.5 text-xs font-semibold text-white bg-[#163A50] rounded hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="px-3.5 py-1.5 text-[13px] font-semibold text-white bg-[#163A50] rounded hover:opacity-90 disabled:opacity-50 transition-opacity"
               aria-label="Simulate Conditioned Futures"
             >
               Branch with this move
@@ -99,7 +99,7 @@ export default function ObservatoryControls({
             data-testid="expand-wave-btn"
             onClick={onExpandWave}
             disabled={isLoadingWave}
-            className="px-3 py-1.5 text-xs font-semibold text-white bg-[#163A50] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
+            className="px-3 py-1.5 text-[13px] font-semibold text-white bg-[#163A50] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
           >
             +5 more possibilities
           </button>
@@ -109,7 +109,7 @@ export default function ObservatoryControls({
             data-testid="recurse-deeper-btn"
             onClick={onRecurseDeeper}
             disabled={isLoadingWave || !hasSelectedNode}
-            className="px-3 py-1.5 text-xs font-medium text-[#161615] bg-[#F4F2ED] rounded-lg hover:bg-[#DCD8CE] disabled:opacity-50 transition-colors whitespace-nowrap"
+            className="px-3 py-1.5 text-[13px] font-medium text-[#161615] bg-[#F4F2ED] rounded-lg hover:bg-[#DCD8CE] disabled:opacity-50 transition-colors whitespace-nowrap"
             aria-label="See what happens next (Auto-Project Next 5 Futures)"
           >
             See what happens next
@@ -118,7 +118,7 @@ export default function ObservatoryControls({
           <button
             type="button"
             onClick={onToggleActionModal}
-            className="px-3 py-1.5 text-xs font-medium text-[#161615] bg-[#F4F2ED] rounded-lg hover:bg-[#DCD8CE] transition-colors whitespace-nowrap"
+            className="px-3 py-1.5 text-[13px] font-medium text-[#161615] bg-[#F4F2ED] rounded-lg hover:bg-[#DCD8CE] transition-colors whitespace-nowrap"
             aria-label="What if I… (Inject Action)"
           >
             What if I…
@@ -132,20 +132,20 @@ export default function ObservatoryControls({
             value={situationInput}
             onChange={(e) => onSituationInputChange(e.target.value)}
             placeholder="Enter your high-stakes dilemma or crossroads..."
-            className="flex-1 px-3 py-1.5 text-xs text-[#161615] bg-[#F4F2ED] border border-[#DCD8CE] rounded-lg focus:outline-none placeholder:text-[#4A4844]"
+            className="flex-1 px-3 py-1.5 text-[13px] text-[#161615] bg-[#F4F2ED] border border-[#DCD8CE] rounded-lg focus:outline-none placeholder:text-[#4A4844]"
           />
           <button
             type="submit"
             data-testid="simulate-btn"
             disabled={isLoadingWave}
-            className="px-3 py-1.5 text-xs font-semibold text-white bg-[#163A50] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
+            className="px-3 py-1.5 text-[13px] font-semibold text-white bg-[#163A50] rounded-lg hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap"
           >
             {isLoadingWave ? 'Simulating…' : 'Predict 5 Futures'}
           </button>
         </form>
 
         {/* Mass conservation indicator */}
-        <div className="hidden lg:flex items-center text-xs tabular-nums text-[#4A4844] whitespace-nowrap pl-2 border-l border-[#DCD8CE]">
+        <div className="hidden lg:flex items-center text-[13px] tabular-nums text-[#4A4844] whitespace-nowrap pl-2 border-l border-[#DCD8CE]">
           <span>Explored: {Math.round((1 - unexploredMass) * 100)}%</span>
           <span className="mx-1">·</span>
           <span>Unexplored: {Math.round(unexploredMass * 100)}%</span>

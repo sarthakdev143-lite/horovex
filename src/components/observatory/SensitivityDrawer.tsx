@@ -60,14 +60,14 @@ export default function SensitivityDrawer({
             <h2 className="text-base font-semibold text-[#161615]">
               Sensitivity Sliders
             </h2>
-            <p className="text-xs text-[#4A4844]">
+            <p className="text-[13px] text-[#4A4844]">
               60 FPS real-time Bayesian mass perturbation
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 text-xs text-[#4A4844] hover:text-[#161615] rounded"
+            className="p-1 text-[13px] text-[#4A4844] hover:text-[#161615] rounded"
             aria-label="Close sensitivity drawer"
           >
             ✕
@@ -87,11 +87,11 @@ export default function SensitivityDrawer({
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor={`slider-${key}`}
-                    className="text-xs font-semibold text-[#161615]"
+                    className="text-[13px] font-semibold text-[#161615]"
                   >
                     {label}
                   </label>
-                  <span className="text-xs font-semibold tabular-nums text-[#163A50]">
+                  <span className="text-[13px] font-semibold tabular-nums text-[#163A50]">
                     {pct > 0 ? `+${pct}%` : `${pct}%`}
                   </span>
                 </div>
@@ -105,7 +105,7 @@ export default function SensitivityDrawer({
                   onChange={(e) => onLeverChange(key, parseFloat(e.target.value))}
                   className="w-full h-1.5 cursor-pointer accent-[#163A50]"
                 />
-                <p className="text-xs text-[#4A4844] leading-tight">
+                <p className="text-[13px] text-[#4A4844] leading-tight">
                   {description}
                 </p>
               </div>
@@ -119,11 +119,11 @@ export default function SensitivityDrawer({
         <button
           type="button"
           onClick={onResetLevers}
-          className="w-full py-2 px-3 text-xs font-medium rounded bg-[#E5E1D8] text-[#161615] hover:bg-[#DCD8CE] transition-colors"
+          className="w-full py-2 px-3 text-[13px] font-medium rounded bg-[#E5E1D8] text-[#161615] hover:bg-[#DCD8CE] transition-colors"
         >
           Reset Sliders to Neutral
         </button>
-        <p className="text-xs text-[#4A4844] text-center leading-snug">
+        <p className="text-[13px] text-[#4A4844] text-center leading-snug">
           Perturbations dynamically reshape 3D stele heights while preserving exact mass conservation.
         </p>
       </div>

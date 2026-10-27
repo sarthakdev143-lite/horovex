@@ -36,26 +36,26 @@ export default function FocusedStelePanel({
           <h3 className="text-sm font-semibold text-[#161615] leading-snug">
             {node.title}
           </h3>
-          <span className="text-xs text-[#4A4844] tabular-nums block">
+          <span className="text-[13px] text-[#4A4844] tabular-nums block">
             Horizon: {node.timeHorizon} · Depth {node.depth}
           </span>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="px-2 py-0.5 text-xs text-[#4A4844] hover:text-[#161615] rounded bg-[#F4F2ED]"
+          className="px-2 py-0.5 text-[13px] text-[#4A4844] hover:text-[#161615] rounded bg-[#F4F2ED]"
           aria-label="Close focused stele panel"
         >
           Close
         </button>
       </div>
 
-      <p className="text-xs text-[#161615] leading-relaxed line-clamp-3">
+      <p className="text-[13px] text-[#161615] leading-relaxed line-clamp-3">
         {node.narrativeSummary || 'Selected future stele in the Alabaster Sanctuary.'}
       </p>
 
       {/* Metrics Row */}
-      <div data-ui="true" className="grid grid-cols-2 gap-2 p-2.5 rounded bg-[#F4F2ED] text-xs">
+      <div data-ui="true" className="grid grid-cols-2 gap-2 p-2.5 rounded bg-[#F4F2ED] text-[13px]">
         <div>
           <span className="text-[#4A4844] block">Conditional Likelihood</span>
           <span className="text-sm font-semibold tabular-nums text-[#163A50]">
@@ -70,13 +70,13 @@ export default function FocusedStelePanel({
         </div>
         <div>
           <span className="text-[#4A4844] block">Reversibility Score</span>
-          <span className="text-xs font-semibold tabular-nums text-[#161615]">
+          <span className="text-[13px] font-semibold tabular-nums text-[#161615]">
             {node.reversibilityScore.toFixed(1)}/10
           </span>
         </div>
         <div>
           <span className="text-[#4A4844] block">Door Category</span>
-          <span className="text-xs font-medium text-[#161615] capitalize">
+          <span className="text-[13px] font-medium text-[#161615] capitalize">
             {node.reversibilityType.replace('_', ' ')}
           </span>
         </div>
@@ -87,7 +87,7 @@ export default function FocusedStelePanel({
         <button
           type="button"
           onClick={() => onCollapse(node.id)}
-          className="flex-1 py-1.5 px-2.5 text-xs font-semibold text-white bg-[#163A50] rounded hover:opacity-90 transition-opacity"
+          className="flex-1 py-1.5 px-2.5 text-[13px] font-semibold text-white bg-[#163A50] rounded hover:opacity-90 transition-opacity"
         >
           Mark what actually happened
         </button>
@@ -95,7 +95,7 @@ export default function FocusedStelePanel({
           type="button"
           onClick={onRecurseDeeper}
           disabled={isLoading}
-          className="py-1.5 px-2.5 text-xs font-medium text-[#161615] bg-[#F4F2ED] rounded hover:bg-[#DCD8CE] disabled:opacity-50 transition-colors"
+          className="py-1.5 px-2.5 text-[13px] font-medium text-[#161615] bg-[#F4F2ED] rounded hover:bg-[#DCD8CE] disabled:opacity-50 transition-colors"
         >
           Branch
         </button>
