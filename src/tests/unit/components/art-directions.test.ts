@@ -211,13 +211,28 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
       'utf8'
     );
 
-    // page.tsx renders the sanctuary garden demo, not the scroll story
-    expect(pageSrc).toContain('ArtDirectionDemo');
+    // page.tsx renders the alternating-beats sanctuary landing
+    expect(pageSrc).toContain('SanctuaryBeatsLanding');
     expect(pageSrc).not.toContain('AlabasterStoryScroll');
 
     // Garden honors its direction prop and routes each direction to its scene
     expect(demoSrc).toContain('initialDirection');
     expect(demoSrc).toContain("DIRECTION_THEMES[direction]");
+
+    // Beats landing alternates pure-3D beats with opaque content beats
+    const beatsSrc = readFileSync(
+      join(process.cwd(), 'src/components/directions/SanctuaryBeatsLanding.tsx'),
+      'utf8'
+    );
+    expect(beatsSrc).toContain('data-beat="hero"');
+    expect(beatsSrc).toContain('data-beat="decision"');
+    expect(beatsSrc).toContain('data-beat="rise"');
+    expect(beatsSrc).toContain('data-beat="futures"');
+    expect(beatsSrc).toContain('data-beat="vista"');
+    expect(beatsSrc).toContain('id="step-decision"');
+    expect(beatsSrc).toContain('id="step-futures"');
+    expect(beatsSrc).toContain('data-testid="simulate-btn"');
+    expect(beatsSrc).toContain('data-testid="launch-observatory-btn"');
 
     // No theme switcher buttons or secondary theme triggers
     expect(demoSrc).not.toContain('switch-direction-');

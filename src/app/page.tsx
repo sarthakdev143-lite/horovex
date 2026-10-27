@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import ArtDirectionDemo from '@/components/directions/ArtDirectionDemo';
+import SanctuaryBeatsLanding from '@/components/directions/SanctuaryBeatsLanding';
 
 export default function LandingPage() {
   return (
@@ -12,7 +12,7 @@ export default function LandingPage() {
         </div>
       }
     >
-      <ArtDirectionDemo initialDirection="sanctuary" />
+      <SanctuaryBeatsLanding />
     </Suspense>
   );
 }
