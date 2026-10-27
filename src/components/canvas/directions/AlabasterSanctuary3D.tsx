@@ -735,7 +735,9 @@ export function AlabasterSanctuary3D({
   }, []);
 
   // 5-Act Z-Axis Storytelling Camera Choreography + Click-to-Fly Rig
-  const lookAtRef = useRef(new THREE.Vector3(0, 1.1, 4.0));
+  // Initialized at the overview framing so the first frame (and headless
+  // screenshots) already show the composed sanctuary, not a mid-sweep sky.
+  const lookAtRef = useRef(new THREE.Vector3(0, 1.1, -5.2));
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
