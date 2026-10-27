@@ -197,9 +197,13 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(sanctuary3DSrc).toContain('AlabasterSanctuary3D');
   });
 
-  it('enforces unboxed scroll-driven storytelling on / with AlabasterStoryScroll (Acts I-V and zero theme switchers)', () => {
+  it('ships the sanctuary garden simulator on / via ArtDirectionDemo (no theme switchers)', () => {
     const scrollStorySrc = readFileSync(
       join(process.cwd(), 'src/components/directions/AlabasterStoryScroll.tsx'),
+      'utf8'
+    );
+    const demoSrc = readFileSync(
+      join(process.cwd(), 'src/components/directions/ArtDirectionDemo.tsx'),
       'utf8'
     );
     const pageSrc = readFileSync(
@@ -207,16 +211,26 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
       'utf8'
     );
 
-    // page.tsx renders AlabasterStoryScroll
-    expect(pageSrc).toContain('AlabasterStoryScroll');
+    // page.tsx renders the sanctuary garden demo, not the scroll story
+    expect(pageSrc).toContain('ArtDirectionDemo');
+    expect(pageSrc).not.toContain('AlabasterStoryScroll');
+
+    // Garden honors its direction prop and routes each direction to its scene
+    expect(demoSrc).toContain('initialDirection');
+    expect(demoSrc).toContain("DIRECTION_THEMES[direction]");
 
     // No theme switcher buttons or secondary theme triggers
+    expect(demoSrc).not.toContain('switch-direction-');
     expect(scrollStorySrc).not.toContain('switch-direction-');
-    expect(scrollStorySrc).not.toContain('Landscape 3D');
-    expect(scrollStorySrc).not.toContain('Instrument 3D');
-    expect(scrollStorySrc).not.toContain('Dark Room 3D');
 
-    // Acts I–IV anchors and editorial headlines
+    // Garden landing essentials: decision headline, simulate + launch CTAs
+    expect(demoSrc).toContain('See where your next decision leads.');
+    expect(demoSrc).toContain('data-testid="simulate-btn"');
+    expect(demoSrc).toContain('data-testid="launch-observatory-btn"');
+    expect(demoSrc).toContain('data-testid="recurse-deeper-btn"');
+    expect(demoSrc).toContain('data-testid="expand-wave-btn"');
+
+    // Dormant scroll story keeps its own structure (acts, testids, links)
     expect(scrollStorySrc).toContain('id="step-decision"');
     expect(scrollStorySrc).toContain('Every decision splits your world in five.');
     expect(scrollStorySrc).toContain('id="step-futures"');
@@ -224,12 +238,7 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(scrollStorySrc).toContain('Every outcome becomes a new origin.');
     expect(scrollStorySrc).toContain('id="step-mentor"');
     expect(scrollStorySrc).toContain('One recommended path illuminated.');
-
-    // Act V threshold input, CTA, flagship pills, and compatibility testids
     expect(scrollStorySrc).toContain('Enter your crossroads.');
-    expect(scrollStorySrc).toContain('data-testid="simulate-btn"');
-    expect(scrollStorySrc).toContain('data-testid="recurse-deeper-btn"');
-    expect(scrollStorySrc).toContain('data-testid="expand-wave-btn"');
     expect(scrollStorySrc).toContain('/observatory?demo=saas-pivot');
     expect(scrollStorySrc).toContain('/observatory?demo=solo-ai');
     expect(scrollStorySrc).toContain('/observatory?demo=relocation');

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useMultiverseStore } from '@/lib/state/useMultiverseStore';
@@ -41,14 +42,31 @@ const ZERO_LEVERS: SliderDeltas = {
 export default function ArtDirectionDemo({
   initialDirection = 'sanctuary',
 }: ArtDirectionDemoProps) {
-  const direction: ArtDirectionId = initialDirection ? 'sanctuary' : 'sanctuary';
-  const theme = DIRECTION_THEMES.sanctuary;
+  const direction: ArtDirectionId =
+    initialDirection && DIRECTION_THEMES[initialDirection]
+      ? initialDirection
+      : 'sanctuary';
+  const theme = DIRECTION_THEMES[direction] || DIRECTION_THEMES.sanctuary;
 
   useEffect(() => {
     document.documentElement.style.backgroundColor = theme.ground;
     document.body.style.backgroundColor = theme.ground;
     document.body.style.color = theme.ink;
   }, [theme]);
+
+  // Commit the decorative garden canvas teardown synchronously on navigation
+  // intent, before the route transition starts. Unmounting the R3F root
+  // inside the transition races React 19 concurrent rendering (removeChild
+  // crash, dropped client nav).
+  const [gardenAlive, setGardenAlive] = useState(true);
+  useEffect(() => {
+    const disarmGarden = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest?.('a[href^="/observatory"]');
+      if (anchor) flushSync(() => setGardenAlive(false));
+    };
+    document.addEventListener('click', disarmGarden, true);
+    return () => document.removeEventListener('click', disarmGarden, true);
+  }, []);
 
   const nodes = useMultiverseStore((state) => state.nodes);
   const rootNodeId = useMultiverseStore((state) => state.rootNodeId);
@@ -559,16 +577,20 @@ export default function ArtDirectionDemo({
         className="fixed inset-0 w-full h-[100dvh] z-[1] overflow-hidden"
         style={{ backgroundColor: theme.ground }}
       >
-        <DirectionCanvas
-          direction={direction}
-          nodes={nodeList}
-          selectedNodeId={selectedNode?.id || null}
-          goldenPathIds={goldenPathNodeIds}
-          onSelectNode={handleFocusNode}
-          scrollProgress={scrollProgress}
-          cameraMode={cameraMode}
-          className="w-full h-full"
-        />
+        {gardenAlive ? (
+          <DirectionCanvas
+            direction={direction}
+            nodes={nodeList}
+            selectedNodeId={selectedNode?.id || null}
+            goldenPathIds={goldenPathNodeIds}
+            onSelectNode={handleFocusNode}
+            scrollProgress={scrollProgress}
+            cameraMode={cameraMode}
+            className="w-full h-full"
+          />
+        ) : (
+          <div className="w-full h-full" style={{ backgroundColor: theme.ground }} aria-hidden="true" />
+        )}
         <noscript>
           <img
             src={theme.plates[0].src}
