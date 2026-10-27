@@ -157,8 +157,8 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(goldenPathNodeIds.length).toBe(2);
   });
 
-  it('keeps the Sanctuary as a demos experiment while /observatory ships the obsidian scene', () => {
-    const demoSrc = readFileSync(
+  it('locks in the Sanctuary identity without theme switchers, 3-step UX, and architectural stone monoliths', () => {
+    const landingSrc = readFileSync(
       join(process.cwd(), 'src/components/directions/ArtDirectionDemo.tsx'),
       'utf8'
     );
@@ -174,22 +174,30 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
       'utf8'
     );
 
-    // No theme switcher buttons in the demos experiment
-    expect(demoSrc).not.toContain('switch-direction-');
+    // No theme switcher buttons on / or /observatory
+    expect(landingSrc).not.toContain('switch-direction-');
+    expect(obsSrc).not.toContain('Landscape 3D');
+    expect(obsSrc).not.toContain('Instrument 3D');
+    expect(obsSrc).not.toContain('Dark Room 3D');
+    expect(obsSrc).toContain('3D Sanctuary');
+    expect(obsSrc).toContain('Compare in Table');
 
-    // Live /observatory renders the obsidian MultiverseCanvas, not the sanctuary
-    expect(obsSrc).toContain('MultiverseCanvas');
-    expect(obsSrc).not.toContain('3D Sanctuary');
-    expect(obsSrc).not.toContain('Alabaster');
+    // 3-step left-column structure & required testids on /
+    expect(landingSrc).toContain('id="step-decision"');
+    expect(landingSrc).toContain('id="step-futures"');
+    expect(landingSrc).toContain('id="step-mentor"');
+    expect(landingSrc).toContain('data-testid="simulate-btn"');
+    expect(landingSrc).toContain('data-testid="recurse-deeper-btn"');
+    expect(landingSrc).toContain('data-testid="expand-wave-btn"');
 
-    // Sanctuary experiment stays intact for /demos (monoliths, fins, streams)
+    // Architectural stone monoliths, water basin, colonnade fins, and stream data
     expect(sanctuary3DSrc).toContain('ArchitecturalStoneMonolith');
     expect(sanctuary3DSrc).toContain('colonnadeFins');
     expect(sanctuary3DSrc).toContain('streamData');
     expect(sanctuary3DSrc).toContain('AlabasterSanctuary3D');
   });
 
-  it('ships the obsidian hero landing on / with MultiverseCanvas and flagship showcases', () => {
+  it('enforces unboxed scroll-driven storytelling on / with AlabasterStoryScroll (Acts I-V and zero theme switchers)', () => {
     const scrollStorySrc = readFileSync(
       join(process.cwd(), 'src/components/directions/AlabasterStoryScroll.tsx'),
       'utf8'
@@ -199,17 +207,16 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
       'utf8'
     );
 
-    // Live / renders the obsidian MultiverseCanvas hero, not the story scroll
-    expect(pageSrc).toContain('MultiverseCanvas');
-    expect(pageSrc).not.toContain('AlabasterStoryScroll');
+    // page.tsx renders AlabasterStoryScroll
+    expect(pageSrc).toContain('AlabasterStoryScroll');
 
-    // E2E compatibility: launch CTA, flagship demos, demo deep-links
-    expect(pageSrc).toContain('data-testid="launch-observatory-btn"');
-    expect(pageSrc).toContain('id="flagship-demos"');
-    expect(pageSrc).toContain('/observatory?demo=saas-pivot');
-
-    // Dormant scroll experiment keeps its own structure (acts, testids, links)
+    // No theme switcher buttons or secondary theme triggers
     expect(scrollStorySrc).not.toContain('switch-direction-');
+    expect(scrollStorySrc).not.toContain('Landscape 3D');
+    expect(scrollStorySrc).not.toContain('Instrument 3D');
+    expect(scrollStorySrc).not.toContain('Dark Room 3D');
+
+    // Acts I–IV anchors and editorial headlines
     expect(scrollStorySrc).toContain('id="step-decision"');
     expect(scrollStorySrc).toContain('Every decision splits your world in five.');
     expect(scrollStorySrc).toContain('id="step-futures"');
@@ -217,6 +224,8 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
     expect(scrollStorySrc).toContain('Every outcome becomes a new origin.');
     expect(scrollStorySrc).toContain('id="step-mentor"');
     expect(scrollStorySrc).toContain('One recommended path illuminated.');
+
+    // Act V threshold input, CTA, flagship pills, and compatibility testids
     expect(scrollStorySrc).toContain('Enter your crossroads.');
     expect(scrollStorySrc).toContain('data-testid="simulate-btn"');
     expect(scrollStorySrc).toContain('data-testid="recurse-deeper-btn"');

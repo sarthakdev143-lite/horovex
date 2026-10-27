@@ -163,7 +163,7 @@ Every feature identified during the authoritative survey is cataloged and assign
 | M3 | Strategic Mentor Engine & Golden Path Solver | Implement Digital Twin vault, Multi-Objective Utility $U(n)$, Bellman Expected Utility solver, Golden Path tracer in `#D4AF37`, Strategic Advisory HUD, 14-Day Playbook, Tripwires, and 3 Flagship Demos | M2 | DONE |
 | M4 | Sensitivity Levers, Wavefunction Collapse & Dual Persistence | Implement 60 FPS Softmax logit levers, Reality Check-In wavefunction collapse, Multi-Provider AI adapter + deterministic fallback engine, Supabase SQL schema + Guest Sandbox, 2D Chronicle Matrix, and Dossier Export | M3 | DONE |
 | M5 | Final Milestone: Full E2E Test Pass & Adversarial Hardening | Phase 1: Pass 100% of E2E Test Suite (Tiers 1-4). Phase 2: Tier 5 Adversarial Coverage Hardening with Challenger -> Worker -> Reviewer loop | M4, TEST_READY.md | DONE |
-| M6 | Alabaster experiment + Obsidian restore | Sanctuary/light-tree shipped as `/demos` experiment, then reverted: obsidian `#050507` restored on `/` + `/observatory`, sanctuary kept dormant for demos | M5 | DONE |
+| M6 | Alabaster Sanctuary live | White/blue tower sanctuary + light-tree scroll story on `/` + `/observatory` (user-confirmed look); obsidian files kept dormant, E2E re-aimed at sanctuary CTAs | M5 | DONE |
 
 ---
 
