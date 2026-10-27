@@ -41,8 +41,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        serif: ["var(--font-newsreader)", "Georgia", "serif"],
-        sans: ["var(--font-instrument-sans)", "system-ui", "-apple-system", "sans-serif"],
+        serif: ["var(--font-instrument-serif)", "Georgia", "serif"],
+        sans: ["var(--font-plus-jakarta)", "system-ui", "-apple-system", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       boxShadow: {
         "gold-sm": "0 0 10px rgba(212, 175, 55, 0.25)",

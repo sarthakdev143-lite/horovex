@@ -70,4 +70,5 @@ Desktop.ini
 # Track project skills (.agents/skills/), ignore agent run logs and handoffs.
 .agents/*
 !.agents/skills/
+.opencode-logs/
 .taste-skill/
