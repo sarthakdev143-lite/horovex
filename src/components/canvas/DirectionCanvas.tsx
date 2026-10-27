@@ -20,6 +20,7 @@ export interface DirectionCanvasProps {
   recommendedPathNodeIds?: string[];
   onSelectNode?: (id: string) => void;
   onNodeSelect?: (node: ProbabilityNode) => void;
+  onReady?: () => void;
   levers?: SliderDeltas;
   className?: string;
   scrollProgress?: number;
@@ -42,6 +43,7 @@ export default function DirectionCanvas({
   recommendedPathNodeIds,
   onSelectNode,
   onNodeSelect,
+  onReady,
   levers,
   className = 'w-full h-full relative',
   scrollProgress = 0,
@@ -135,6 +137,7 @@ export default function DirectionCanvas({
             e.preventDefault();
             setWebglSupported(false);
           });
+          onReady?.();
         }}
       >
         <Suspense fallback={null}>
