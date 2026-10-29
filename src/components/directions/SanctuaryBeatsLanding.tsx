@@ -35,10 +35,9 @@ const CUSTOM_ARCHETYPES = [
   'Status-Quo Downside Trap',
 ];
 
-type BeatId = 'hero' | 'decision' | 'rise' | 'futures' | 'vista';
+type BeatId = 'decision' | 'rise' | 'futures' | 'vista';
 
 const BEAT_CAMERA: Record<BeatId, 'overview' | 'focus'> = {
-  hero: 'overview',
   decision: 'overview',
   rise: 'focus',
   futures: 'overview',
@@ -57,14 +56,18 @@ export default function SanctuaryBeatsLanding() {
 
   const [gardenAlive, setGardenAlive] = useState(true);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
   const [beatsAlive, setBeatsAlive] = useState<Record<BeatId, boolean>>({
-    hero: true,
-    decision: false,
+    decision: true,
     rise: false,
     futures: false,
     vista: false,
   });
-  const [activeBeat, setActiveBeat] = useState<BeatId>('hero');
+  const [activeBeat, setActiveBeat] = useState<BeatId>('decision');
   const [dilemmaInput, setDilemmaInput] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -329,57 +332,47 @@ export default function SanctuaryBeatsLanding() {
       <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between px-6 py-5 sm:px-10 lg:px-16">
         <Link
           href="/"
-          className="font-serif text-[21px] font-semibold leading-none tracking-[-0.01em]"
+          className={`font-serif text-[21px] font-semibold leading-none tracking-[-0.01em] motion-safe:transition-all motion-safe:duration-700 ${mounted ? 'motion-safe:opacity-100' : 'motion-safe:opacity-0 motion-safe:-translate-y-2'}`}
           style={{ color: INK }}
         >
           HOROVEX
         </Link>
-        <span className="text-sm" style={{ color: SLATE }}>
-          {activeBeat === 'hero' ? 'The Garden' : activeBeat === 'rise' ? 'Watch' : 'Your move'}
-        </span>
+        <nav aria-label="Page sections" className={`hidden items-center gap-7 text-sm md:flex motion-safe:transition-all motion-safe:duration-700 ${mounted ? 'motion-safe:opacity-100' : 'motion-safe:opacity-0 motion-safe:-translate-y-2'}`} style={{ transitionDelay: '90ms' }}>
+          <a href="#step-decision" className="transition-opacity hover:opacity-60" style={{ color: SLATE }}>
+            Your Decision
+          </a>
+          <a href="#step-rise" className="transition-opacity hover:opacity-60" style={{ color: SLATE }}>
+            The Garden
+          </a>
+          <a href="#step-futures" className="transition-opacity hover:opacity-60" style={{ color: SLATE }}>
+            Five Futures
+          </a>
+        </nav>
+        <Link
+          href={simHref}
+          className={`px-4 py-2 text-sm font-medium text-white transition-transform active:scale-95 motion-safe:transition-all motion-safe:duration-700 ${mounted ? 'motion-safe:opacity-100' : 'motion-safe:opacity-0 motion-safe:-translate-y-2'}`}
+          style={{ backgroundColor: INK, transitionDelay: '180ms' }}
+        >
+          Open Full Simulator
+        </Link>
       </header>
 
       <main className="relative">
-        {/* BEAT 1 — pure 3D */}
-        <section
-          data-beat="hero"
-          aria-label="Sanctuary garden"
-          className="relative z-10 flex min-h-[100dvh] flex-col justify-end px-6 pb-16 sm:px-10 lg:px-16"
-        >
-          <div className={`max-w-[1320px] mx-auto w-full text-center ${revealed('hero')}`}>
-            <h1
-              className={`mx-auto max-w-[16ch] font-serif text-[clamp(2.5rem,7vw,4.5rem)] leading-[1.02] tracking-[-0.025em] ${revealed('hero')}`}
-              style={{ transitionDelay: '60ms' }}
-            >
-              See where your next decision leads.
-            </h1>
-            <div className={`mt-8 flex flex-wrap items-center justify-center gap-4 ${revealed('hero')}`} style={{ transitionDelay: '160ms' }}>
-              <a
-                href="#step-decision"
-                className="inline-block px-7 py-3.5 text-[17px] font-medium text-white"
-                style={{ backgroundColor: BLUE }}
-              >
-                Start with your dilemma
-              </a>
-              <p className="w-full text-[13px] sm:w-auto" style={{ color: SLATE }}>
-                Scroll — one thing at a time.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* BEAT 2 — content: the dilemma */}
+        {/* BEAT 1 — content: the dilemma */}
         <section
           data-beat="decision"
           id="step-decision"
           aria-label="Enter your decision"
-          className="relative z-10 px-6 py-24 sm:px-10 lg:px-16"
-          style={{ backgroundColor: GROUND }}
+          className="relative z-10 px-6 pb-24 pt-32 sm:px-10 sm:pt-36 lg:px-16"
+          style={{ backgroundColor: GROUND, minHeight: '100dvh' }}
         >
-          <div className={`mx-auto w-full max-w-[1320px] ${revealed('decision')}`}>
-            <h2 className={`max-w-[20ch] font-serif text-[clamp(1.75rem,4vw,2.75rem)] leading-[1.05] tracking-[-0.02em] ${revealed('decision')}`}>
+          <div className={`mx-auto flex min-h-[calc(100dvh-12rem)] w-full max-w-[1320px] flex-col justify-center ${revealed('decision')}`}>
+            <h1 className="max-w-[16ch] font-serif text-[clamp(2.5rem,7vw,4rem)] leading-[1.02] tracking-[-0.025em]">
+              See where your next decision leads.
+            </h1>
+            <p className="mt-4 max-w-[52ch] text-[17px] leading-[1.55]" style={{ color: SLATE }}>
               Name the crossroads. The garden grows around it.
-            </h2>
+            </p>
             <form onSubmit={handleSimulate} className={`mt-8 max-w-2xl ${revealed('decision')}`} style={{ transitionDelay: '120ms' }}>
               <label htmlFor="dilemma-input" className="mb-2 block text-base font-semibold">
                 1. Enter your decision crossroads
@@ -436,6 +429,12 @@ export default function SanctuaryBeatsLanding() {
                   San Francisco vs. Dubai
                 </button>
               </div>
+              <p className="mt-4 text-[14px]" style={{ color: SLATE }}>
+                Probabilities always sum to 100% — the recommended path is Bellman-optimal against your values.
+              </p>
+              <a href="#step-rise" className="mt-6 inline-block text-[14px] font-medium transition-opacity hover:opacity-60" style={{ color: BLUE }}>
+                Scroll to watch them rise ↓
+              </a>
             </div>
           </div>
         </section>
@@ -443,6 +442,7 @@ export default function SanctuaryBeatsLanding() {
         {/* BEAT 3 — pure 3D breather */}
         <section
           data-beat="rise"
+          id="step-rise"
           aria-label="Watch the futures rise"
           className="relative z-10 flex min-h-[100dvh] flex-col justify-end px-6 pb-16 sm:px-10 lg:px-16"
         >
@@ -492,6 +492,27 @@ export default function SanctuaryBeatsLanding() {
                       </span>
                     </div>
                     <p className="mt-2 text-[17px] font-medium leading-snug">{n.title}</p>
+                    {(n.narrativeSummary || n.tripwires[0]) && (
+                      <p className="mt-2 text-[16px] leading-relaxed line-clamp-3" style={{ color: SLATE }}>
+                        {n.narrativeSummary || `Watch for: ${n.tripwires[0]}`}
+                      </p>
+                    )}
+                    {n.causalDrivers.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {n.causalDrivers.slice(0, 2).map((d, di) => {
+                          const label = typeof d === 'string' ? d : d.factor;
+                          return (
+                            <span
+                              key={`${n.id}-driver-${di}`}
+                              className="px-2 py-1 text-[13px] leading-none"
+                              style={{ backgroundColor: '#E4E5E1', color: INK }}
+                            >
+                              {label.length > 42 ? `${label.slice(0, 40)}…` : label}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                     {isRec && (
                       <p className="mt-2 text-sm font-semibold" style={{ color: BLUE }}>
                         Recommended path
@@ -527,6 +548,7 @@ export default function SanctuaryBeatsLanding() {
         {/* BEAT 5 — pure 3D vista + single CTA */}
         <section
           data-beat="vista"
+          id="step-cta"
           aria-label="Enter the full simulator"
           className="relative z-10 flex min-h-[100dvh] flex-col items-start justify-end px-6 pb-20 sm:px-10 lg:px-16"
         >
@@ -547,12 +569,47 @@ export default function SanctuaryBeatsLanding() {
       </main>
 
       <footer
-        className="relative z-10 px-6 py-10 sm:px-10 lg:px-16"
+        className="relative z-10 px-6 pb-10 pt-20 sm:px-10 lg:px-16"
         style={{ backgroundColor: GROUND }}
       >
-        <div className="mx-auto flex w-full max-w-[1320px] flex-col items-center gap-2 text-center text-sm sm:flex-row sm:items-baseline sm:justify-between sm:text-left" style={{ color: SLATE }}>
-          <p className="text-[13px]" style={{ color: SLATE }}>Decision intelligence for the irreversible.</p>
-          <p className="text-[13px] tabular-nums" style={{ color: SLATE }}>HOROVEX · Alabaster Sanctuary</p>
+        <div className="mx-auto w-full max-w-[1320px]">
+          <div className="grid grid-cols-2 gap-10 pt-10 md:grid-cols-4">
+            <div className="col-span-2 md:col-span-1">
+              <p className="font-serif text-[21px] font-semibold leading-none tracking-[-0.01em]">HOROVEX</p>
+              <p className="mt-3 max-w-[28ch] text-[13px] leading-relaxed" style={{ color: SLATE }}>
+                Decision intelligence for the irreversible.
+              </p>
+            </div>
+            <nav aria-label="Product">
+              <p className="text-[13px] font-semibold" style={{ color: SLATE }}>Product</p>
+              <ul className="mt-3 space-y-2 text-[14px]">
+                <li><Link href="/observatory?demo=saas-pivot" className="transition-opacity hover:opacity-60">Causal Observatory</Link></li>
+                <li><Link href="/demos/landscape" className="transition-opacity hover:opacity-60">Probability Landscape</Link></li>
+                <li><Link href="/demos/instrument" className="transition-opacity hover:opacity-60">Horology Instrument</Link></li>
+                <li><Link href="/demos/darkroom" className="transition-opacity hover:opacity-60">Dark Room Exhibit</Link></li>
+              </ul>
+            </nav>
+            <nav aria-label="Flagship scenarios">
+              <p className="text-[13px] font-semibold" style={{ color: SLATE }}>Scenarios</p>
+              <ul className="mt-3 space-y-2 text-[14px]">
+                <li><Link href="/observatory?demo=saas-pivot" className="transition-opacity hover:opacity-60">SaaS Enterprise Pivot</Link></li>
+                <li><Link href="/observatory?demo=solo-ai" className="transition-opacity hover:opacity-60">Senior Tech to Solo AI</Link></li>
+                <li><Link href="/observatory?demo=relocation" className="transition-opacity hover:opacity-60">Global Relocation</Link></li>
+              </ul>
+            </nav>
+            <div>
+              <p className="text-[13px] font-semibold" style={{ color: SLATE }}>Method</p>
+              <ul className="mt-3 space-y-2 text-[14px]" style={{ color: SLATE }}>
+                <li>Bayesian mass conservation</li>
+                <li>Bellman Golden Path solver</li>
+                <li>60 FPS sensitivity levers</li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-10 flex flex-col gap-2 pt-6 text-[13px] tabular-nums sm:flex-row sm:items-center sm:justify-between" style={{ color: SLATE }}>
+            <p>© {new Date().getFullYear()} HOROVEX Labs. All rights reserved.</p>
+            <p>HOROVEX · Alabaster Sanctuary</p>
+          </div>
         </div>
       </footer>
     </div>

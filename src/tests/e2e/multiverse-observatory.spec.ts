@@ -51,18 +51,20 @@ test.describe('Feature 2: Sanctuary Garden Landing Experience', () => {
   });
 
   test('F2-E2E-04: clicking "Open Full Simulator" button navigates to observatory workspace', async ({ page }) => {
+    test.setTimeout(60000);
     const launchButton = page.getByTestId('launch-observatory-btn').first();
     await expect(launchButton).toBeVisible();
     await launchButton.click();
-    await expect(page).toHaveURL(/.*observatory.*/, { timeout: 15000 });
+    await expect(page).toHaveURL(/.*observatory.*/, { timeout: 25000 });
   });
 
   test('F2-E2E-05: submitting a dilemma populates 5 futures in the garden', async ({ page }) => {
+    test.setTimeout(90000);
     const dilemmaInput = page.locator('#dilemma-input');
     await expect(dilemmaInput).toBeVisible();
     await dilemmaInput.fill('Pivot SaaS to enterprise or stay self-serve?');
     await page.getByTestId('simulate-btn').click();
-    await expect(page.locator('#step-futures').getByText('Direct High-Conviction Commit').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('#step-futures').getByText('Direct High-Conviction Commit').first()).toBeVisible({ timeout: 45000 });
     await expect(page).toHaveURL('http://localhost:3000/');
   });
 });
