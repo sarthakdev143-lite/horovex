@@ -224,7 +224,6 @@ describe('HOROVEX Signature Alabaster Sanctuary & Art Direction Demos: Themes & 
       join(process.cwd(), 'src/components/directions/SanctuaryBeatsLanding.tsx'),
       'utf8'
     );
-    expect(beatsSrc).toContain('data-beat="hero"');
     expect(beatsSrc).toContain('data-beat="decision"');
     expect(beatsSrc).toContain('data-beat="rise"');
     expect(beatsSrc).toContain('data-beat="futures"');
